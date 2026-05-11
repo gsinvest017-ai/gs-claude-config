@@ -1,0 +1,12 @@
+# Defensive: never commit anything that looks like a secret
+.credentials.json
+*.credentials.json
+*.key
+*.pem
+.env
+.env.*
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*~

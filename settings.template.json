@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "__HOME__/gs-zipline-tej",
+      "__HOME__/gs-strategy",
+      "__HOME__/gs-auto-fix",
+      "__HOME__/quant-research-skill",
+      "__HOME__/tutorial"
+    ]
+  },
+  "model": "opus",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  }
+}
