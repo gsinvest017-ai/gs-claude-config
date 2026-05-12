@@ -60,3 +60,48 @@ Per-repo runner。重點設計：
 - `install.sh` 結尾加 4 行 hint 指向 `scripts/install-cron.sh`，不強制裝（純可選）
 
 下一步：M5 smoke test。
+
+### M5 — Smoke test + final（done）
+
+**1. `bash -n` 全部 4 個 shell 檔通過。** shellcheck 系統沒裝，跳過。
+
+**2. `night-shift.sh` DRY_RUN 測試：** 在 `/tmp/night-shift-smoke-*` 建一個 git repo + TODO.md，跑 `DRY_RUN=1 ./scripts/night-shift.sh <repo>`：
+- 分支 `claude/nightly-2026-05-12` 正確建立
+- Prompt 組裝為 25 行 / 1294 bytes，正確以 `/safe-yolo` 開頭，把 TODO.md 內容嵌進「任務來源」區塊
+- 預計命令印出：`timeout --signal=TERM --kill-after=30s 2h /home/kevin/.local/bin/claude -p --dangerously-skip-permissions --permission-mode bypassPermissions --add-dir <repo> --model opus --output-format text`
+- DRY_RUN 路徑短路，未呼叫 claude
+- Log 寫入 `~/.claude/night-shift-logs/<basename>-<ts>.log`
+
+**3. `night-shift-runner.sh` DRY_RUN 測試：** 寫一個 `scripts/targets.conf` 列 3 個 target（2 個 tmp 有效 repo + 1 個 `/tmp/does-not-exist`），其中第二個用 `|TODO.md` 顯式指定 prompt 檔。`DRY_RUN=1 NIGHT_SHIFT_WINDOW_HOURS=1 ./scripts/night-shift-runner.sh`：
+- targets.conf 正確解析（3 條，包含註解略過、`|` 切分）
+- Per-repo 預算動態算出 3540s（= 3600 - 60）
+- 不存在的 path 走 `skip` 路徑，不中斷整體流程
+- Summary：`total=3 processed=2 skipped_budget=0 overall_rc=0`
+- targets.conf 因 .gitignore 不會被 commit，測試結束 `git status` 乾淨
+
+**4. install-cron.sh 沒有實際在這台機器執行**（避免污染本機 crontab）。其 awk splice 邏輯與 uninstall-cron.sh 對稱，idempotent 性質靠 marker block 保證；如果出問題重跑會替換、不會疊。
+
+### 已知留待後續處理（不影響本 PR）
+
+- WSL2 上 cron daemon 預設不會自動 enable，README 已提醒。
+- Log rotation 沒做，README 給了 `find -mtime +14 -delete` 範例讓使用者自行排程。
+- 沒有失敗 retry / 通知整合（Slack / email），目前都靠看 log。
+
+### 完成清單
+
+| 檔案 | 狀態 |
+|------|------|
+| `scripts/night-shift.sh` | ✅ |
+| `scripts/night-shift-runner.sh` | ✅ |
+| `scripts/install-cron.sh` | ✅ |
+| `scripts/uninstall-cron.sh` | ✅ |
+| `scripts/targets.conf.example` | ✅ |
+| `.gitignore`（排除 `scripts/targets.conf`） | ✅ |
+| `README.md` Night Shift 區段 | ✅ |
+| `install.sh` 可選提示 | ✅ |
+| 本進度檔 | ✅ |
+
+下一步（人類動作）：
+1. 在這台機器：`cp scripts/targets.conf.example scripts/targets.conf` → 填要被夜跑的 repo → `scripts/install-cron.sh`
+2. 在新機器：`git clone` + `install.sh` + 同上 2 步即可
+3. 視需要 push `feat/night-shift-cron` 到 origin 並合進 main（不在這個 yolo run 範圍）
