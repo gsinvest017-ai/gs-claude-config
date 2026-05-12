@@ -10,3 +10,6 @@
 .DS_Store
 *.swp
 *~
+
+# Per-machine night-shift target list (each PC fills in its own repo paths)
+scripts/targets.conf

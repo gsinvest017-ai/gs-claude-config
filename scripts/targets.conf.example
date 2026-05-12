@@ -1,0 +1,17 @@
+# targets.conf — 夜間 cron 要自動跑 /safe-yolo 的 repo 列表
+#
+# 每行一個 repo 的「絕對路徑」。# 開頭視為註解，空白行略過。
+# 真正使用時把這份檔案複製為 targets.conf（已被 .gitignore 排除，每台機器各自維護）：
+#
+#   cp scripts/targets.conf.example scripts/targets.conf
+#   $EDITOR scripts/targets.conf
+#   scripts/install-cron.sh
+#
+# 進階：可在路徑後加 `|<prompt-file>` 指定要餵給 /safe-yolo 的提示來源檔
+# （預設會自動掃 TODO.md / docs/TODO.md / docs/refactor*.md / docs/issues*.md）。
+#
+# 範例：
+#
+# /home/kevin/gs-strategy
+# /home/kevin/gs-zipline-tej|docs/refactor-plan.md
+# /home/kevin/quant-research-skill
