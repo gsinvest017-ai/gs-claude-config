@@ -52,3 +52,11 @@ Per-repo runner。重點設計：
 `NIGHT_SHIFT_START_HOUR` / `NIGHT_SHIFT_WINDOW_HOURS` 兩個 env var 可在 install 階段覆寫起始時間與窗口長度。
 
 下一步：M4 串到 README + install.sh。
+
+### M4 — README + install.sh hint（done）
+
+- README 加入完整 `## Night Shift` 區段：what it is / setup（3 步驟）/ what happens each night / logs / customizing（env var 表 + 範例）/ disabling / safety notes（含 WSL2 cron 啟動提醒）/ migration
+- 同時更新 repo 結構樹，把 `scripts/` 與 `docs/` 列入
+- `install.sh` 結尾加 4 行 hint 指向 `scripts/install-cron.sh`，不強制裝（純可選）
+
+下一步：M5 smoke test。

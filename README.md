@@ -18,6 +18,14 @@ gs-claude-config/
 │   ├── quant-researcher/SKILL.md
 │   ├── review-strategy/SKILL.md
 │   └── safe-yolo/SKILL.md
+├── scripts/                  # cron / night-shift automation (optional)
+│   ├── night-shift.sh           # per-repo unattended /safe-yolo runner
+│   ├── night-shift-runner.sh    # cron entry, iterates targets.conf
+│   ├── install-cron.sh          # register the 00:00 cron job
+│   ├── uninstall-cron.sh        # remove it
+│   └── targets.conf.example     # template — copy to targets.conf per machine
+├── docs/
+│   └── progress-night-shift-cron.md
 ├── CLAUDE.md                 # ~/.claude/CLAUDE.md — global instructions
 ├── settings.template.json    # rendered → ~/.claude/settings.json on install
 └── install.sh                # symlink everything into ~/.claude/
@@ -83,6 +91,106 @@ The following live under `~/.claude/` but are deliberately excluded:
 | `policy-limits.json`, `mcp-needs-auth-cache.json`, `.last-cleanup` | Machine-local state |
 | `tasks/`, `plans/`, `backups/`, `ide/` | Local working state |
 | `settings.json` (the rendered copy) | Machine-specific; only the template is tracked |
+
+## Night Shift — unattended `/safe-yolo` via cron
+
+Optional feature for the 00:00–06:00 unattended window. A user-level cron job
+fires at midnight, walks through every repo listed in `scripts/targets.conf`,
+opens a fresh `claude/nightly-YYYY-MM-DD` branch in each, and runs
+`/safe-yolo` against that repo's TODO / refactor / issue docs. Everything is
+hard-killed at 06:00 so it can never run into your workday.
+
+Why it lives here: this repo already owns global Claude config + the install
+script for new machines, so adding `scripts/` keeps the migration story to a
+single `git clone && ./install.sh && scripts/install-cron.sh`.
+
+### Setup on a new machine
+
+```bash
+# (1) ~/.claude/ symlinks
+cd ~/gs-claude-config && ./install.sh
+
+# (2) Tell night shift which repos to work on
+cp scripts/targets.conf.example scripts/targets.conf
+$EDITOR scripts/targets.conf      # one repo path per line
+
+# (3) Register the cron job
+scripts/install-cron.sh
+crontab -l                        # verify the >>> gs-claude-config night-shift <<< block
+```
+
+That's it. From the next 00:00 onward the runner will fire automatically.
+
+### What happens each night
+
+1. **00:00** — cron fires `night-shift-runner.sh` wrapped in `timeout 6h`
+2. For each repo in `targets.conf`, in order:
+   - Skip if the path doesn't exist
+   - Refuse to act on a dirty working tree (no auto-stash)
+   - Create `claude/nightly-YYYY-MM-DD` (suffix `-HHMMSS` if today's already exists)
+   - Gather a prompt from: explicit `|file` from targets.conf → `TODO.md` / `docs/TODO.md` / `docs/refactor*.md` / `docs/issue*.md` / `docs/progress-*.md` → `gh issue list` fallback
+   - Invoke `claude -p --dangerously-skip-permissions --permission-mode bypassPermissions --add-dir <repo> --model opus` with that prompt prefixed by `/safe-yolo`
+   - Each repo gets `min(remaining_budget − 60s, 2h)`
+   - If Claude makes no new commits, the empty branch is deleted
+3. **06:00** — outer `timeout` SIGTERMs everything; `SIGKILL` 120s later as a safety net
+4. Branches stay local — **nothing is pushed, no PR is opened**. Review them at your leisure with `git branch | grep claude/nightly`.
+
+### Logs
+
+- Per-repo: `~/.claude/night-shift-logs/<repo>-<YYYY-MM-DD-HHMMSS>.log`
+- Per-night dispatcher summary: `~/.claude/night-shift-logs/_runner-<YYYY-MM-DD-HHMMSS>.log`
+
+Old logs are not rotated automatically; prune with `find ~/.claude/night-shift-logs -mtime +14 -delete` in your own crontab if it grows.
+
+### Customizing
+
+| Env var                            | Default | Where to set | What it does |
+|------------------------------------|---------|--------------|--------------|
+| `NIGHT_SHIFT_START_HOUR`           | `0`     | `install-cron.sh` invocation | Cron hour (e.g. `23` to start at 11 PM) |
+| `NIGHT_SHIFT_WINDOW_HOURS`         | `6`     | `install-cron.sh` invocation | Total budget; also the outer `timeout` |
+| `NIGHT_SHIFT_PER_REPO_TIMEOUT`     | dynamic | targets.conf line / per call | Override per-repo cap (`2h`, `45m`, …) |
+| `NIGHT_SHIFT_MODEL`                | `opus`  | env at cron time              | `opus` / `sonnet` / full model ID |
+| `DRY_RUN=1`                        | unset   | manual smoke test             | Build the prompt + print the command but don't invoke claude |
+
+Examples:
+
+```bash
+# Start at 23:00, run for 7 hours instead of 6
+NIGHT_SHIFT_START_HOUR=23 NIGHT_SHIFT_WINDOW_HOURS=7 scripts/install-cron.sh
+
+# Dry-run a single repo right now (no cron, no claude call)
+DRY_RUN=1 scripts/night-shift.sh ~/gs-strategy
+
+# Dry-run the whole dispatcher
+DRY_RUN=1 scripts/night-shift-runner.sh
+```
+
+### Disabling
+
+```bash
+scripts/uninstall-cron.sh         # remove the crontab block
+# or just: $EDITOR scripts/targets.conf and comment everything out — cron will still fire but exit immediately
+```
+
+### Safety notes
+
+- **Branches only, no push.** The script never pushes to remote, never opens PRs, never sends messages. Worst case: you wake up to N junk local branches you `git branch -D`.
+- **Dirty trees are skipped.** A repo with uncommitted changes is refused, not stashed. The runner moves on.
+- **Subscription quota.** Each night burns Claude Pro/Max quota. With a typical 5-target setup over 6h you may hit rate limits; the per-repo `timeout` cap absorbs this.
+- **`--dangerously-skip-permissions` is on.** Inside the nightly branch Claude can run arbitrary tools without prompting. The `--add-dir` flag limits filesystem access to the target repo, and the dirty-tree check prevents clobbering work-in-progress.
+- **WSL2 caveat.** If your `cron` daemon doesn't run automatically on Windows boot, the job won't fire. Confirm with `service cron status` and arrange to auto-start it (`sudo systemctl enable cron`, or a Windows scheduled task that runs `wsl service cron start`).
+
+### Migration to another machine
+
+Same flow as the rest of this repo. After `git clone` + `install.sh` on the new PC:
+
+```bash
+cp scripts/targets.conf.example scripts/targets.conf
+$EDITOR scripts/targets.conf      # different machine may want different repos
+scripts/install-cron.sh
+```
+
+`targets.conf` is `.gitignore`d on purpose — each machine keeps its own list.
 
 ## Adding a new slash command or skill
 

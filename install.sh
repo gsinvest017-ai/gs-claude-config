@@ -60,3 +60,9 @@ fi
 
 echo
 echo "Done. Verify with:  ls -la ~/.claude/ | grep -E 'commands|skills|CLAUDE'"
+echo
+echo "Optional — enable the 00:00–06:00 unattended /safe-yolo cron job:"
+echo "  cp $REPO_DIR/scripts/targets.conf.example $REPO_DIR/scripts/targets.conf"
+echo "  \$EDITOR $REPO_DIR/scripts/targets.conf      # one repo path per line"
+echo "  $REPO_DIR/scripts/install-cron.sh"
+echo "See README.md → 'Night Shift' for details, env vars, and disable instructions."
