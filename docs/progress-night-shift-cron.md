@@ -42,3 +42,13 @@ Per-repo runner。重點設計：
 - **DRY_RUN**：`DRY_RUN=1` 會印出 prompt + 預定命令但不真的呼叫 claude
 
 `bash -n` 語法檢查通過。下一步：M3 dispatcher + cron 安裝/解除腳本。
+
+### M3 — Dispatcher + cron install/uninstall（done）
+
+- `scripts/night-shift-runner.sh`：cron 進入點。讀 `targets.conf` 解析每行（支援 `path|prompt-file`、`#` 註解、空白行），用 `deadline_epoch` 自我計時：每次迭代前算剩餘秒數，<120s 就跳過剩下的 repo。Per-repo timeout 動態取「剩餘 - 60s」與 7200s 之較小者，確保單一 repo 不會吃掉整個窗口。Runner 自己的 log 寫到 `~/.claude/night-shift-logs/_runner-<ts>.log`。Exit code 忽略 124（GNU timeout 觸發）視為正常。
+- `scripts/install-cron.sh`：在 user crontab 用 `>>> gs-claude-config night-shift <<<` 標記區塊 splice 進去，重跑會替換不會重複。設 `PATH` 包含 `$HOME/.local/bin`（claude 在那裡）+ 若偵測到 nvm 加上最新 node。cron 行格式：`0 0 * * * NIGHT_SHIFT_WINDOW_HOURS=6 timeout --signal=TERM --kill-after=120s 6h <runner>`，雙保險 hard kill。
+- `scripts/uninstall-cron.sh`：依同一組 marker 把 block awk 掉，idempotent。
+
+`NIGHT_SHIFT_START_HOUR` / `NIGHT_SHIFT_WINDOW_HOURS` 兩個 env var 可在 install 階段覆寫起始時間與窗口長度。
+
+下一步：M4 串到 README + install.sh。
