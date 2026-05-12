@@ -26,6 +26,19 @@
 
 ## 進度日誌
 
-### M1 — Scaffolding（in progress）
+### M1 — Scaffolding（done, commit 5ecbf35）
 
-開了 `feat/night-shift-cron` 分支，建立 `scripts/`、`docs/` 目錄。接下來補 `targets.conf.example` + `.gitignore`，commit 後進入 M2。
+開了 `feat/night-shift-cron` 分支，建立 `scripts/`、`docs/` 目錄、`scripts/targets.conf.example`，並把 `scripts/targets.conf` 加進 `.gitignore`。
+
+### M2 — `scripts/night-shift.sh`（done）
+
+Per-repo runner。重點設計：
+
+- **安全網**：拒絕在 dirty working tree 上跑、要求是 git repo、找不到任何 prompt source 時自動退出並刪掉空分支
+- **分支策略**：`claude/nightly-YYYY-MM-DD`，當天若已存在則 fallback 為 `claude/nightly-YYYY-MM-DD-HHMMSS`
+- **Prompt 來源**：(a) `targets.conf` 內以 `|<file>` 顯式指定，(b) 否則自動掃 `TODO.md` / `docs/TODO.md` / `docs/refactor*.md` / `docs/issue*.md` / `docs/progress-*.md`（最多 8 個檔案，每檔 head 400 行），(c) 最後 fallback 用 `gh issue list` 抓 20 條 open issue
+- **Claude 呼叫**：`timeout 2h`（per-repo，可用 `NIGHT_SHIFT_PER_REPO_TIMEOUT` 覆寫）+ `claude -p --dangerously-skip-permissions --permission-mode bypassPermissions --add-dir <repo> --model opus`，prompt 走 stdin（避免 shell quoting）
+- **Log**：每次 invocation 一份 `~/.claude/night-shift-logs/<repo>-<YYYY-MM-DD-HHMMSS>.log`；script 一開頭就 `exec > >(tee -a "$LOG_FILE") 2>&1` 把所有輸出 mirror 過去
+- **DRY_RUN**：`DRY_RUN=1` 會印出 prompt + 預定命令但不真的呼叫 claude
+
+`bash -n` 語法檢查通過。下一步：M3 dispatcher + cron 安裝/解除腳本。
