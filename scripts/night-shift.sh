@@ -171,7 +171,9 @@ claude_cmd=(
 log "claude command: ${claude_cmd[*]}"
 
 if [[ "${DRY_RUN:-0}" = "1" ]]; then
-    log "DRY_RUN=1 — skipping claude invocation, leaving branch $branch in place"
+    log "DRY_RUN=1 — skipping claude invocation; restoring previous branch and deleting test branch"
+    git checkout - >/dev/null 2>&1 || true
+    git branch -D "$branch" >/dev/null 2>&1 || true
     exit 0
 fi
 
