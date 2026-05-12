@@ -105,3 +105,77 @@ Per-repo runner。重點設計：
 1. 在這台機器：`cp scripts/targets.conf.example scripts/targets.conf` → 填要被夜跑的 repo → `scripts/install-cron.sh`
 2. 在新機器：`git clone` + `install.sh` + 同上 2 步即可
 3. 視需要 push `feat/night-shift-cron` 到 origin 並合進 main（不在這個 yolo run 範圍）
+
+---
+
+## 第二輪 — 啟用 in this machine（2026-05-12）
+
+接續 `/safe-yolo 幫我設定後續建議的 1.` 觸發。本輪分 4 個 milestone：
+
+### M6 — Merge feat/night-shift-cron → main（done, commit 03fb518）
+
+`git checkout main && git merge --ff-only feat/night-shift-cron` 純 fast-forward，無 push，完全本地。
+這樣即使日常工作切到其他分支，cron 觸發的絕對路徑仍然指到 main 的 scripts。
+
+### M7 — Cron daemon 確認（done）
+
+```
+service cron status → active (running) since 2026-05-08
+/etc/wsl.conf       → [boot] systemd=true   ✓ 重開機會自動拉起
+crontab -l          → 沒有現存 crontab，乾淨狀態
+```
+
+不需要 sudo 介入。
+
+### M8 — 掃 candidate repo + 建 targets.conf（done）
+
+掃 8 個已知 repo 的「最近 commit 時間 + 可 auto-discover 的 prompt 文件」，最終啟用 3 個，commented 4 個：
+
+| Repo | 啟用 | 理由 |
+|------|------|------|
+| `~/gs-strategy` | ✅ | 24h 前 commit；2 份 `docs/progress-*.md` |
+| `~/autogo` | ✅ | 20h 前 commit；2 份 `docs/progress-*.md` |
+| `~/TQuant-Lab` | ✅ | 13 分鐘前剛 commit；`docs/progress-ipynb-to-py.md` |
+| `~/gs-zipline-tej` | ❌ | 6 天前；無 progress 文件 |
+| `~/gs-auto-fix` | ❌ | 4 天前；無 progress 文件 |
+| `~/quant-research-skill` | ❌ | 4 天前；無 progress 文件 |
+| `~/tutorial` | ❌ | progress 文件在 3 層深的子目錄，需要 `|<file>` 顯式指定 |
+| `~/NETOPS` | ❌ | 8 天前；只有 SPEC versioning |
+
+`targets.conf` 是本機檔案、`.gitignore`d，跟著 README 範本記錄理由放這份。
+
+**順手抓到的 bug + fix**（commit `e5d22b9`）：原本 `night-shift.sh` 在 DRY_RUN 路徑只 `exit 0`，但分支已經 `git checkout -b` 出來了，留下空分支 + 把工作 repo 切到該分支。我自己 cleanup 時還誤把 `gs-strategy` 切到 main（應該是 `feat/quant-paper-crawler`），已立即復原。修法：DRY_RUN 也走 `git checkout -` + `git branch -D` 清理路徑。新版 DRY_RUN 驗證跑完後 3 個 repo 都回到原分支、無遺留 nightly 分支。
+
+### M9 — Install cron + 驗證（done）
+
+```
+./scripts/install-cron.sh             → block 寫入 crontab
+crontab -l                            → 顯示 PATH 包含 nvm + ~/.local/bin、cron line 正確
+重跑 install-cron.sh                  → 仍只 1 個 block（idempotent）
+uninstall-cron.sh → install-cron.sh   → roundtrip 乾淨
+```
+
+實際 cron line：`0 0 * * * NIGHT_SHIFT_WINDOW_HOURS=6 timeout --signal=TERM --kill-after=120s 6h /home/kevin/gs-claude-config/scripts/night-shift-runner.sh`
+
+下個 fire time：**2026-05-13 00:00 CST**。
+
+### Fallback 指引
+
+如果隔天早上發現出問題：
+
+```bash
+# 1. 立刻停用
+~/gs-claude-config/scripts/uninstall-cron.sh
+
+# 2. 看 log 找原因
+ls -lt ~/.claude/night-shift-logs/ | head
+cat ~/.claude/night-shift-logs/_runner-<最新>.log
+
+# 3. 清掉 claude 自己開的夜班分支（不會 push，純本機）
+for d in ~/gs-strategy ~/autogo ~/TQuant-Lab; do
+    git -C "$d" branch --list 'claude/nightly-*'  # 先看
+done
+# 視情況：git -C <repo> branch -D claude/nightly-YYYY-MM-DD
+
+# 4. 永久停掉只要不重跑 install-cron.sh 即可
+```
