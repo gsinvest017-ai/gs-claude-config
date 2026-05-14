@@ -33,11 +33,25 @@
 - PSGallery 模組 → `~\Documents\PowerShell\Modules\<name>\<version>\`（PS7 user scope）
 - oh-my-posh binary → `C:\Users\User\AppData\Local\Microsoft\WindowsApps\oh-my-posh.exe`（winget 透過 MSIX/Store 方式安裝，user PATH 預設已含）
 
-**Commit:** _待填_（M1 commit）
+**Commit:** `c01626c`
 
 **注意事項：**
 - 三個套件都裝在 user scope，沒有動到系統路徑 / 沒有用 admin。
 - 第一輪建立的 fish-like profile 不會被本輪影響；M2 只會在 profile 尾端**追加**新的 Import / init 區塊，不修改既有設定。
+
+### M2 — 接入 PS7 profile + 驗證
+
+**完成內容：**
+- 在 `Microsoft.PowerShell_profile.ps1` 尾端追加 `# === Prettify (M2) ===` 區塊，順序為 `Terminal-Icons → posh-git → oh-my-posh`（oh-my-posh 必須最後，才能擁有最終的 prompt function）。
+- 下載 `jandedobbeleer.omp.json` 至 `C:\Users\User\AppData\Local\oh-my-posh\themes\`（winget MSIX 安裝模式不附 themes 檔，也不設 `POSH_THEMES_PATH`，必須自備）。
+- profile 內顯式設定 `$env:POSH_THEMES_PATH` 供將來換主題用。
+- fresh pwsh 啟動測試結果：四個模組（PSReadLine 2.4.5 / CompletionPredictor 0.1.1 / Terminal-Icons 0.11.0 / posh-git 1.1.0）皆載入；`prompt` function 被 oh-my-posh 注入；無錯誤輸出。
+
+**踩到的坑：**
+1. 第一版用 `Join-Path $env:POSH_THEMES_PATH ...`，但 winget MSIX 安裝沒設這個環境變數，導致 null binding 噴出 terminating error，連 else fallback 都沒跑。修法：profile 內顯式 set 該變數。
+2. oh-my-posh v18+ 不再把 themes 嵌入 binary。必須額外下載 theme 檔到本地、或讓 `--config` 直接吃線上 URL（每次 shell 啟動會跑網路）。本實作選下載到 user-local，無網路依賴。
+
+**Commit:** _待填_（M2 commit）
 
 ## Fallback 指引
 
