@@ -1,0 +1,5 @@
+# Files in the source dir that chezmoi should NOT apply to the target.
+# README.tmpl and any docs/ live alongside templates but aren't user dotfiles.
+
+README.md
+docs/**

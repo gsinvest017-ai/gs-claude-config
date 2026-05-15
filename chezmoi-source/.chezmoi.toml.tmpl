@@ -1,0 +1,28 @@
+{{/* gs-claude-config — per-user chezmoi config prompts.
+     Rendered ONCE on `chezmoi init`. Result lives at:
+       Linux/macOS: ~/.config/chezmoi/chezmoi.toml
+       Windows:     %USERPROFILE%\.config\chezmoi\chezmoi.toml
+     Re-prompt by deleting that file and re-running `chezmoi init`. */ -}}
+
+{{- $name        := promptStringOnce . "name"        "Your display name (used in git commits if you let chezmoi manage gitconfig)" -}}
+{{- $email       := promptStringOnce . "email"       "Your work email" -}}
+{{- $githubUser  := promptStringOnce . "githubUser"  "Your GitHub username (e.g. for cloning sibling repos)" -}}
+{{- $role        := promptStringOnce . "role"        "Your role tag (e.g. quant-researcher, dev, ml) — shows up in your CLAUDE.md" "dev" -}}
+{{- $editor      := promptStringOnce . "editor"      "Default $EDITOR" "code" -}}
+{{- $installFonts := promptBoolOnce . "installFonts" "Install CaskaydiaCove Nerd Font automatically (recommended for Oh My Posh themes)" true -}}
+{{- $installCron  := promptBoolOnce . "installCron"  "Enable the 00:00–06:00 unattended /safe-yolo cron (POSIX only)" false -}}
+
+[data]
+    name         = {{ $name | quote }}
+    email        = {{ $email | quote }}
+    githubUser   = {{ $githubUser | quote }}
+    role         = {{ $role | quote }}
+    editor       = {{ $editor | quote }}
+    installFonts = {{ $installFonts }}
+    installCron  = {{ $installCron }}
+
+[edit]
+    command = {{ $editor | quote }}
+
+[diff]
+    pager = "less"

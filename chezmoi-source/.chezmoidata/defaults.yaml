@@ -1,0 +1,41 @@
+# Shared constants used by *.tmpl files.
+# Anything per-user goes in .chezmoi.toml.tmpl (promptString*), not here.
+
+claude:
+  # Default permissions.allow list — keep minimal. Colleagues can extend in their local settings.
+  defaultAllowPatterns:
+    - "mcp__playwright"
+    - "mcp__chrome-devtools"
+    - "mcp__puppeteer"
+    - "Bash(npm *)"
+    - "Bash(npx *)"
+    - "Bash(pnpm *)"
+    - "Bash(yarn *)"
+    - "Bash(node *)"
+    - "Bash(gh pr view *)"
+    - "Bash(gh pr list *)"
+    - "Bash(gh pr diff *)"
+    - "Bash(gh pr checks *)"
+    - "Bash(gh pr status *)"
+    - "Bash(gh issue view *)"
+    - "Bash(gh issue list *)"
+    - "Bash(gh run view *)"
+    - "Bash(gh run list *)"
+    - "Bash(gh run watch *)"
+    - "Bash(gh repo view *)"
+    - "Bash(gh auth status *)"
+    - "Bash(gh search *)"
+  defaultPlugins:
+    typescript-lsp@claude-plugins-official: true
+
+terminal:
+  # Nerd Font Mono family name as it appears after `oh-my-posh font install CascadiaCode --headless`
+  nerdFont: "CaskaydiaCove NFM"
+  ohMyPoshTheme: "jandedobbeleer.omp.json"
+
+repos:
+  # Sibling repos that need to be cloned for some skills/symlinks to resolve.
+  siblings:
+    - name: quant-research-skill
+      remote: "https://github.com/gsinvest017-ai/quant-research-skill.git"
+      requiredBy: "skills/quant-researcher, skills/review-strategy"

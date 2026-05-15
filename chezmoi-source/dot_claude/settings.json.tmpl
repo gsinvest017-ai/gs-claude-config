@@ -1,0 +1,21 @@
+{{/* Rendered into ~/.claude/settings.json. Per-user values come from
+     .chezmoi.toml.tmpl prompts; shared defaults come from
+     .chezmoidata/defaults.yaml.
+
+     We deliberately render lists/maps via toJson to avoid hand-rolled
+     comma juggling. The wrapping object is plain text so we can mix
+     hand-written keys (theme, model) with templated ones. */ -}}
+{
+  "autoUpdatesChannel": "latest",
+  "theme": "dark",
+  "model": "opus",
+  "skipDangerousModePermissionPrompt": true,
+  "enableAllProjectMcpServers": true,
+  "enabledPlugins": {{ .claude.defaultPlugins | toJson }},
+  "permissions": {
+    "allow": {{ .claude.defaultAllowPatterns | toJson }},
+    "additionalDirectories": [
+      {{ printf "%s/projects" .chezmoi.homeDir | quote }}
+    ]
+  }
+}
