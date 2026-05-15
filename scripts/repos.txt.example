@@ -1,0 +1,20 @@
+# gs-claude-config — per-machine repo list for scripts/clone-all.sh
+#
+# One repo per line. Two formats are accepted:
+#
+#   <git-url>                  → clones to $HOME/<basename-without-.git>
+#   <git-url>  <dest-path>     → clones to <dest-path> (~ is expanded)
+#
+# Lines starting with # and blank lines are ignored.
+# Copy this file to scripts/repos.txt and edit. The real file is gitignored
+# so each machine keeps its own list.
+
+# --- Kevin's core repos (edit / delete to fit your setup) ---
+git@github.com:gsinvest017-ai/gs-zipline-tej.git
+git@github.com:gsinvest017-ai/gs-auto-fix.git
+git@github.com:gsinvest017-ai/gs-strategy.git
+git@github.com:gsinvest017-ai/quant-research-skill.git
+git@github.com:gsinvest017-ai/tutorial.git
+
+# --- Example with explicit destination ---
+# git@github.com:some-org/private-tools.git  ~/work/private-tools
