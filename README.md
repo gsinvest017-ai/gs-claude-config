@@ -1,6 +1,13 @@
 # gs-claude-config
 
-Version-controlled `~/.claude/` config — slash commands, skills, global instructions, and settings template. Clone to a new machine and run `install.sh` to symlink everything into place.
+Version-controlled `~/.claude/` config — slash commands, skills, global instructions, and settings template. Two paths to onboard a new machine:
+
+| Path | OS | One-liner | Best for |
+|------|----|-----------|----------|
+| **chezmoi** | Windows / macOS / Linux | `chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git` | New colleagues — handles prompts, installs apps, sets fonts |
+| install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | Existing setup, advanced users who want full symlink control |
+
+Pick whichever fits — both can coexist on the same machine; only the contributor (Kevin) needs the symlink path.
 
 ## What's in here
 
@@ -37,12 +44,51 @@ Everything in `commands/`, `skills/`, and `CLAUDE.md` is the *real* file. `~/.cl
 
 `settings.json` is *not* symlinked because some keys are machine-specific (e.g. `additionalDirectories`). The template is the shared baseline; each machine keeps its own rendered copy.
 
-## Migrating to a new machine
+## Migrating to a new machine — chezmoi path (recommended)
+
+Single command on a fresh machine:
+
+```powershell
+# Windows (PowerShell 7+ recommended; comes with the bootstrap script anyway)
+winget install --id twpayne.chezmoi --scope user -e
+chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git
+```
+
+```bash
+# macOS / Linux
+brew install chezmoi   # or: sh -c "$(curl -fsLS get.chezmoi.io)"
+chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git
+```
+
+You'll be prompted for **7 values** the first time (defaults in brackets):
+
+| Prompt | Default | Used for |
+|---|---|---|
+| `name` | — | Header of your `~/.claude/CLAUDE.md` |
+| `email` | — | Same |
+| `githubUser` | — | Clone-from URL of sibling repo `quant-research-skill` |
+| `role` | `dev` | Tag in CLAUDE.md (e.g. `quant-researcher`, `ml`, `dev`) |
+| `editor` | `code` | chezmoi's `edit` command default |
+| `installFonts` | `true` | Auto-install CaskaydiaCove Nerd Font during apply |
+| `installCron` | `false` | (POSIX only) enable 00:00–06:00 night-shift cron |
+
+What `chezmoi apply` does:
+1. Renders `~/.claude/CLAUDE.md` from a per-user template (your name/role at top, a skeleton "## projects" section to fill in)
+2. Renders `~/.claude/settings.json` from shared permission/plugin defaults
+3. On Windows: writes `~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1` (fish-style: PSReadLine + oh-my-posh + PSFzf + zoxide)
+4. Runs `run_onchange_install-deps.{ps1,sh}` → installs winget/brew/apt apps + Nerd Font + clones `quant-research-skill` + symlinks `commands/` and `skills/` from this repo
+5. **Does NOT touch** your Windows Terminal `settings.json` — see `chezmoi-source/docs/windows-terminal-setup.md` for the one-click manual font setup
+
+To update later: `cd ~/.local/share/chezmoi && git pull && chezmoi apply`.
+
+## Migrating to a new machine — legacy symlink path
 
 ```bash
 git clone https://github.com/<owner>/gs-claude-config.git ~/gs-claude-config
 cd ~/gs-claude-config
-./install.sh
+./install.sh        # POSIX
+# or:
+.\install.ps1       # Windows (PowerShell)
 ```
 
 `install.sh` is idempotent and does the following:
