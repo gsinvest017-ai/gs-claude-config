@@ -1,0 +1,91 @@
+{{- /* PowerShell 7 profile — applied by chezmoi to:
+       ~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1
+   Windows-only (see chezmoi-source/.chezmoiignore for the gate).
+   Theme name comes from chezmoi-source/.chezmoidata/defaults.yaml. */ -}}
+# ============================================================
+#  PowerShell 7 profile - fish-like experience
+#  Managed by chezmoi (gs-claude-config). Edit:
+#    chezmoi-source/Documents/PowerShell/Microsoft.PowerShell_profile.ps1.tmpl
+#  Then: chezmoi apply
+# ============================================================
+
+Import-Module PSReadLine
+Import-Module CompletionPredictor -ErrorAction SilentlyContinue
+
+# --- Inline ghost-text prediction (fish-style autosuggestion) ---
+# Wrapped in try/catch: prediction needs a real TTY; skip silently when
+# pwsh is invoked non-interactively (e.g. -File with redirected output).
+try {
+    Set-PSReadLineOption -PredictionSource HistoryAndPlugin -ErrorAction Stop
+    Set-PSReadLineOption -PredictionViewStyle InlineView    # ListView for dropdown style
+} catch { }
+
+# --- Syntax highlight palette ---
+Set-PSReadLineOption -Colors @{
+    Command          = 'Cyan'
+    Parameter        = 'Gray'
+    Operator         = 'Magenta'
+    Variable         = 'Green'
+    String           = 'Yellow'
+    Number           = 'White'
+    Type             = 'DarkCyan'
+    Comment          = 'DarkGray'
+    InlinePrediction = 'DarkGray'
+    Error            = 'Red'
+}
+
+# --- Fish-style keybindings ---
+Set-PSReadLineKeyHandler -Key RightArrow       -Function ForwardChar
+Set-PSReadLineKeyHandler -Key Ctrl+RightArrow  -Function ForwardWord
+Set-PSReadLineKeyHandler -Key Tab              -Function MenuComplete
+Set-PSReadLineKeyHandler -Key UpArrow          -Function HistorySearchBackward
+Set-PSReadLineKeyHandler -Key DownArrow        -Function HistorySearchForward
+
+# --- History behavior ---
+Set-PSReadLineOption -HistoryNoDuplicates
+Set-PSReadLineOption -MaximumHistoryCount 10000
+Set-PSReadLineOption -HistorySearchCursorMovesToEnd
+Set-PSReadLineOption -BellStyle None
+
+# === Prettify ===
+# Order: Terminal-Icons & posh-git first, oh-my-posh last so it owns the
+# final prompt function. posh-git still contributes tab-completion for
+# git subcommands/branches.
+
+Import-Module Terminal-Icons -ErrorAction SilentlyContinue
+Import-Module posh-git -ErrorAction SilentlyContinue
+
+# oh-my-posh - full prompt theme.
+if (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    $env:POSH_THEMES_PATH = "$env:LOCALAPPDATA\oh-my-posh\themes"
+    $theme = Join-Path $env:POSH_THEMES_PATH {{ .terminal.ohMyPoshTheme | quote }}
+    if (Test-Path $theme) {
+        oh-my-posh init pwsh --config $theme | Invoke-Expression
+    } else {
+        oh-my-posh init pwsh | Invoke-Expression
+    }
+}
+# === /Prettify ===
+
+# === Fuzzy shell (fzf + PSFzf + zoxide) ===
+# Keybinds:
+#   Ctrl+T  - fuzzy file/dir picker (insert selection at cursor)
+#   Ctrl+R  - fuzzy reverse history search (replaces PSReadLine default)
+#   Alt+C   - fuzzy cd into a subdirectory
+#   z <q>   - jump to "frecent" dir matching <q> (zoxide)
+#   zi      - interactive zoxide picker (uses fzf)
+
+try {
+    Import-Module PSFzf -ErrorAction Stop
+    Set-PsFzfOption `
+        -PSReadlineChordProvider       'Ctrl+t' `
+        -PSReadlineChordReverseHistory 'Ctrl+r' `
+        -PSReadlineChordSetLocation    'Alt+c'
+} catch {
+    Write-Verbose "PSFzf init skipped: $_"
+}
+
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { (zoxide init powershell | Out-String) })
+}
+# === /Fuzzy shell ===

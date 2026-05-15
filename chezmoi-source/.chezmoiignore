@@ -1,5 +1,17 @@
-# Files in the source dir that chezmoi should NOT apply to the target.
-# README.tmpl and any docs/ live alongside templates but aren't user dotfiles.
+{{- /* chezmoi parses .chezmoiignore as a template. Use OS guards so
+       Windows-only files don't apply on Linux/macOS, and vice versa. */ -}}
 
+# Always ignored (source-side docs, not user dotfiles)
 README.md
 docs/**
+
+{{ if ne .chezmoi.os "windows" -}}
+# Windows-only artifacts skipped on POSIX
+Documents/PowerShell/**
+AppData/**
+{{- end }}
+
+{{ if eq .chezmoi.os "windows" -}}
+# POSIX-only artifacts skipped on Windows
+.config/fish/**
+{{- end }}
