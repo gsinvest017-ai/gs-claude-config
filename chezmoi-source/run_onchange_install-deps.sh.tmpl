@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# chezmoi bootstrap (POSIX) — runs when the script content or referenced
+# data changes. Hash of rendered content is tracked by chezmoi; bumping
+# the version string below forces a re-run.
+
+set -euo pipefail
+SCRIPT_VERSION=v1  # bump to force re-run on next chezmoi apply
+
+{{ if eq .chezmoi.os "windows" -}}
+echo "gs-claude-config: install-deps.sh invoked on Windows. Use install-deps.ps1 instead."
+exit 0
+{{- end }}
+
+echo "==> gs-claude-config bootstrap ($SCRIPT_VERSION) on $(hostname)"
+
+# --- 1. Package installs (macOS=brew, Debian/Ubuntu=apt) ---
+if command -v brew >/dev/null; then
+    PKG_INSTALL="brew install"
+    apps=(jandedobbeleer/oh-my-posh/oh-my-posh git gh fzf zoxide)
+elif command -v apt-get >/dev/null; then
+    PKG_INSTALL="sudo apt-get install -y"
+    apps=(git gh fzf zoxide)
+    if ! command -v oh-my-posh >/dev/null; then
+        echo "  [note] install oh-my-posh manually on Linux: https://ohmyposh.dev/docs/installation/linux"
+    fi
+else
+    echo "  [warn] no brew/apt detected — install required tools manually"
+    apps=()
+fi
+
+for a in "${apps[@]}"; do
+    if command -v "${a##*/}" >/dev/null; then
+        echo "  [skip] $a already on PATH"
+    else
+        echo "  [install] $a"
+        $PKG_INSTALL "$a" || echo "  [warn] failed to install $a"
+    fi
+done
+
+# --- 2. Nerd Font ---
+{{ if .installFonts -}}
+font_dir="$HOME/.local/share/fonts"
+if ls "$font_dir"/CaskaydiaCove*NerdFont* >/dev/null 2>&1; then
+    echo "  [skip] CaskaydiaCove Nerd Font already installed"
+elif command -v oh-my-posh >/dev/null; then
+    echo "  [install] CaskaydiaCove Nerd Font via oh-my-posh"
+    oh-my-posh font install CascadiaCode --headless || echo "  [warn] font install failed — re-run after restart"
+else
+    echo "  [warn] oh-my-posh not on PATH yet — re-run chezmoi apply after a shell restart"
+fi
+{{ else -}}
+echo "  [skip] Nerd Font install disabled by user pref (.installFonts=false)"
+{{- end }}
+
+# --- 3. Sibling repo ---
+qrs_remote="https://github.com/{{ .githubUser }}/quant-research-skill.git"
+qrs_fallback="https://github.com/gsinvest017-ai/quant-research-skill.git"
+qrs_dir="$HOME/quant-research-skill"
+if [[ ! -d "$qrs_dir" ]]; then
+    echo "  [clone] quant-research-skill"
+    git clone "$qrs_remote" "$qrs_dir" 2>/dev/null || git clone "$qrs_fallback" "$qrs_dir"
+else
+    echo "  [skip] quant-research-skill already cloned"
+fi
+
+# --- 4. Symlink commands/ + skills/ from repo ---
+repo_dir="$(dirname "{{ .chezmoi.sourceDir }}")"
+claude_dir="$HOME/.claude"
+mkdir -p "$claude_dir"
+
+for name in commands skills; do
+    src="$repo_dir/$name"
+    dst="$claude_dir/$name"
+    if [[ ! -e "$src" ]]; then
+        echo "  [warn] $src missing — skipping symlink for $name"
+        continue
+    fi
+    if [[ -L "$dst" ]]; then
+        echo "  [skip] $dst already a symlink"
+        continue
+    fi
+    if [[ -e "$dst" ]]; then
+        backup="$claude_dir/backups/install-$(date +%Y%m%d-%H%M%S)"
+        mkdir -p "$backup"
+        mv "$dst" "$backup/"
+        echo "  [backup] $dst -> $backup"
+    fi
+    ln -s "$src" "$dst"
+    echo "  [link] $dst -> $src"
+done
+
+echo
+echo "Done. Open a new shell and verify with:"
+echo "  oh-my-posh --version; chezmoi managed | head -10"

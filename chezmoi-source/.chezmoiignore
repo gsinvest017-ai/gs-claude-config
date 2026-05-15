@@ -5,13 +5,19 @@
 README.md
 docs/**
 
+{{- /* IMPORTANT: patterns here match *target* paths, not source filenames.
+       A source file like run_onchange_install-deps.ps1.tmpl has target name
+       install-deps.ps1, so that's what we match. */ -}}
+
 {{ if ne .chezmoi.os "windows" -}}
 # Windows-only artifacts skipped on POSIX
 Documents/PowerShell/**
 AppData/**
+install-deps.ps1
 {{- end }}
 
 {{ if eq .chezmoi.os "windows" -}}
 # POSIX-only artifacts skipped on Windows
 .config/fish/**
+install-deps.sh
 {{- end }}

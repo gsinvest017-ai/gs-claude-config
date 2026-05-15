@@ -1,0 +1,105 @@
+{{- /* chezmoi bootstrap (Windows) — runs when the script content or referenced
+   data changes. Hash of rendered content is tracked by chezmoi; bumping
+   the version string in $ScriptVersion below forces a re-run.
+
+   Responsibilities:
+     1. Install required winget apps (pwsh, oh-my-posh, git, gh, fzf, zoxide)
+     2. Install CaskaydiaCove Nerd Font ({{ if .installFonts }}enabled{{ else }}skipped per user pref{{ end }})
+     3. Clone sibling repo quant-research-skill if missing
+     4. Symlink ~/.claude/{commands,skills} into repo (chezmoi.toml.tmpl's
+        SourceDir parent), since chezmoi manages CLAUDE.md/settings.json as
+        rendered files, but commands/skills are better kept as live symlinks
+        so a `git pull` in the repo immediately updates all colleagues. */ -}}
+
+$ErrorActionPreference = 'Stop'
+$ScriptVersion = 'v1'  # bump to force re-run on next chezmoi apply
+
+{{ if ne .chezmoi.os "windows" -}}
+Write-Host "gs-claude-config: install-deps.ps1 invoked on non-Windows ({{ .chezmoi.os }}). Exiting."
+exit 0
+{{- end }}
+
+Write-Host "==> gs-claude-config bootstrap ($ScriptVersion) on $env:COMPUTERNAME"
+
+# --- 1. winget apps ---
+$apps = @(
+    @{ Id = 'Microsoft.PowerShell';     Name = 'PowerShell 7' },
+    @{ Id = 'JanDeDobbeleer.OhMyPosh';   Name = 'Oh My Posh' },
+    @{ Id = 'Git.Git';                   Name = 'Git for Windows' },
+    @{ Id = 'GitHub.cli';                Name = 'GitHub CLI' },
+    @{ Id = 'junegunn.fzf';              Name = 'fzf' },
+    @{ Id = 'ajeetdsouza.zoxide';        Name = 'zoxide' }
+)
+foreach ($app in $apps) {
+    $installed = winget list --id $app.Id --exact 2>$null | Select-String $app.Id
+    if ($installed) {
+        Write-Host "  [skip] $($app.Name) already installed"
+    } else {
+        Write-Host "  [install] $($app.Name)"
+        winget install --id $app.Id --scope user --silent --accept-package-agreements --accept-source-agreements | Out-Null
+    }
+}
+
+# --- 2. Nerd Font ---
+{{ if .installFonts -}}
+$fontFile = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts\CaskaydiaCoveNerdFontMono-Regular.ttf'
+if (Test-Path $fontFile) {
+    Write-Host "  [skip] CaskaydiaCove Nerd Font already installed"
+} elseif (Get-Command oh-my-posh -ErrorAction SilentlyContinue) {
+    Write-Host "  [install] CaskaydiaCove Nerd Font via oh-my-posh"
+    oh-my-posh font install CascadiaCode --headless
+} else {
+    Write-Host "  [warn] oh-my-posh not on PATH yet — restart shell and re-run chezmoi apply"
+}
+{{ else -}}
+Write-Host "  [skip] Nerd Font install disabled by user pref (.installFonts=false)"
+{{- end }}
+
+# --- 3. Sibling repo ---
+$qrsRemote = 'https://github.com/{{ .githubUser }}/quant-research-skill.git'
+$qrsFallback = 'https://github.com/gsinvest017-ai/quant-research-skill.git'
+$qrsDir = Join-Path $env:USERPROFILE 'quant-research-skill'
+if (-not (Test-Path $qrsDir)) {
+    Write-Host "  [clone] quant-research-skill (skills/quant-researcher + review-strategy depend on it)"
+    try {
+        git -c core.symlinks=true clone $qrsRemote $qrsDir
+    } catch {
+        Write-Host "  fork at $qrsRemote not found, falling back to upstream"
+        git -c core.symlinks=true clone $qrsFallback $qrsDir
+    }
+} else {
+    Write-Host "  [skip] quant-research-skill already cloned"
+}
+
+# --- 4. Symlink commands/ + skills/ from this repo ---
+# chezmoi's sourceDir is <repo>/chezmoi-source. Parent = repo root.
+$repoDir = Split-Path -Parent '{{ .chezmoi.sourceDir }}'
+$claudeDir = Join-Path $env:USERPROFILE '.claude'
+if (-not (Test-Path $claudeDir)) { New-Item -ItemType Directory -Path $claudeDir | Out-Null }
+
+foreach ($name in 'commands','skills') {
+    $src = Join-Path $repoDir $name
+    $dst = Join-Path $claudeDir $name
+    if (-not (Test-Path $src)) {
+        Write-Host "  [warn] $src missing — skipping symlink for $name"
+        continue
+    }
+    if (Test-Path $dst) {
+        $item = Get-Item -LiteralPath $dst -Force
+        if ($item.LinkType -eq 'SymbolicLink') {
+            Write-Host "  [skip] $dst already a symlink"
+            continue
+        }
+        # Real dir/file — back up before linking
+        $backup = Join-Path $claudeDir ("backups\install-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+        New-Item -ItemType Directory -Path $backup -Force | Out-Null
+        Move-Item -LiteralPath $dst -Destination $backup -Force
+        Write-Host "  [backup] $dst -> $backup"
+    }
+    cmd /c mklink /D "`"$dst`"" "`"$src`"" | Out-Null
+    Write-Host "  [link] $dst -> $src"
+}
+
+Write-Host ''
+Write-Host "Done. Open a new pwsh window (so PATH picks up new tools) and verify with:"
+Write-Host "  oh-my-posh --version; chezmoi managed | Select-Object -First 10"
