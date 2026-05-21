@@ -36,9 +36,21 @@
 
 ## 進度日誌
 
-### M1 — progress 骨架（in progress）
+### M1 — progress 骨架 ✅
 
-建立本檔。下一步：撰寫 agent 定義。
+Commit: `143aed3`。
+
+### M2 — agent 定義 ✅
+
+寫 `agents/git-tag.md`：
+
+- model: sonnet
+- 分類：feat / fix / enh / skip（skip = docs/chore/test/...，不獨立成 group 但夾在 group 中仍歸入）
+- safe-yolo `Mn:` 鏈視為一個 group（不被分類規則拆）
+- 預設 dry-run，需 `--apply` 才建 tag；`--push` 才 push remote（push 視為影響 remote，要明示）
+- annotated tag（`-a`）；不 `--force` 覆蓋
+
+下一步：M3 — slash command + skill。
 
 ## Fallback 指引
 
