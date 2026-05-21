@@ -46,6 +46,20 @@
 
 下一步：M4 — README 連結 + smoke test。
 
+### M4 — README 連結 + smoke test ✅
+
+- README 的「What's in here」目錄樹加入 `daily-summary.md`、新增 `agents/` 區塊
+- Smoke test：在本 repo 跑 `git log --since="2026-05-21 00:00" --until="2026-05-21 23:59"`，回傳 M1/M2/M3 三個 commits → 確認 git 查詢語法在 Git Bash 下正確
+- Skill 被 Claude Code 偵測（system-reminder 自動載入 `daily-summary` skill）
+- 後續：M4 commit 本身會出現在 `2026-05-21-summary.md` 裡，讓使用者第一次跑 `/daily-summary` 就能看到完整鏈
+
+## 完成總結
+
+- 4 commits（M1 ~ M4）建立 `/daily-summary` slash command
+- 觸發後抓今日 commits → 分類 → 寫 `YYYY-MM-DD-summary.md`（繁體中文）
+- 不會 push、不會修改原始碼，純彙整工具
+- 與 `/safe-yolo`、`/save-to-obsidian` 串接：safe-yolo 的 `Mn:` 自動歸群組；可一鍵把 summary 匯入 Obsidian
+
 ## Fallback 指引
 
 若中途要 rollback：

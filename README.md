@@ -15,13 +15,20 @@ Pick whichever fits — both can coexist on the same machine; only the contribut
 gs-claude-config/
 ├── commands/                 # ~/.claude/commands/ — slash commands
 │   ├── commit-push.md
+│   ├── daily-summary.md
 │   ├── gh-new.md
 │   ├── git-config.md
 │   ├── quant-researcher.md
 │   ├── review-strategy.md
 │   ├── safe-yolo.md
 │   └── skill.md
+├── agents/                   # ~/.claude/agents/ — subagent definitions
+│   ├── daily-summary.md
+│   ├── language-tutor.md
+│   ├── quant-researcher.md
+│   └── review-strategy.md
 ├── skills/                   # ~/.claude/skills/ — full SKILL.md prompts
+│   ├── daily-summary/SKILL.md
 │   ├── quant-researcher/SKILL.md
 │   ├── review-strategy/SKILL.md
 │   └── safe-yolo/SKILL.md
