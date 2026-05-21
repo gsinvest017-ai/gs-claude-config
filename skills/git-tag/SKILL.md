@@ -66,9 +66,20 @@ git log --since="$TARGET_DATE 00:00" --until="$TARGET_DATE 23:59" \
 **特殊規則 — safe-yolo `Mn:` 鏈**：
 
 - 標題以 `M<數字>:` 開頭 → 屬 safe-yolo milestone 系列
-- 一連串 `Mn:` commit 視為**同一個 milestone group**，不能被分類規則拆開
-- 整個 group 的分類用「最後一個 commit 的 body 判斷」；body 無線索則看「最後一個 commit 的標題去掉 `Mn:` 後的剩餘關鍵字」；都沒有就預設 `enh`
-- group slug 也用最後一個 `Mn:` commit 的剩餘標題
+- 一連串 `Mn:` commit 視為**同一個 milestone group**，但**遇到 N 重設**（current N ≤ previous N，例如 M4 → M1）→ **切新 group**（這代表開始一個新任務）
+- 整個 group 的分類用「最後一個 commit 的 body 判斷」；body 無線索則看「整個 chain 的標題去掉 `Mn:` 後的關鍵字累計」；都沒有就預設 `enh`
+- group slug 用最後一個 `Mn:` commit 的剩餘標題
+
+範例：
+
+```
+M1: A    ← 新 Mn group (G1)
+M2: B    ← N 遞增 → 同 G1
+M3: C    ← 同 G1
+M4: D    ← 同 G1
+M1: E    ← N 重設（1 ≤ 4）→ 切新 group G2
+M2: F    ← N 遞增 → 同 G2
+```
 
 ## 4. 切 milestone group
 

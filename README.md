@@ -18,17 +18,20 @@ gs-claude-config/
 │   ├── daily-summary.md
 │   ├── gh-new.md
 │   ├── git-config.md
+│   ├── git-tag.md
 │   ├── quant-researcher.md
 │   ├── review-strategy.md
 │   ├── safe-yolo.md
 │   └── skill.md
 ├── agents/                   # ~/.claude/agents/ — subagent definitions
 │   ├── daily-summary.md
+│   ├── git-tag.md
 │   ├── language-tutor.md
 │   ├── quant-researcher.md
 │   └── review-strategy.md
 ├── skills/                   # ~/.claude/skills/ — full SKILL.md prompts
 │   ├── daily-summary/SKILL.md
+│   ├── git-tag/SKILL.md
 │   ├── quant-researcher/SKILL.md
 │   ├── review-strategy/SKILL.md
 │   └── safe-yolo/SKILL.md

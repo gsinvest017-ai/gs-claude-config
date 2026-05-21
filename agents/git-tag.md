@@ -48,7 +48,7 @@ git log --since="$TARGET_DATE 00:00" --until="$TARGET_DATE 23:59" \
 | `enh` | `enhance`, `improve`, `refactor`, `perf`, `optimize`, `polish`, `tweak`, `rewrite` |
 | `skip` | `docs`, `chore`, `test`, `ci`, `build`, `deps`, `bump`, `style`, `merge`, `revert` |
 
-**特殊規則**：safe-yolo 的 `Mn:` 開頭 commit（例如 `M1:`, `M2:`）→ 試著從 body / subject 判斷該任務整體屬於哪個分類；若無法判斷，預設歸 `enh`。**`Mn:` 的所有 commit 必定屬於同一個 milestone group**（不要被分類規則拆開）。
+**特殊規則**：safe-yolo 的 `Mn:` 開頭 commit（例如 `M1:`, `M2:`）→ 試著從 body / subject 判斷該任務整體屬於哪個分類；若無法判斷，預設歸 `enh`。**連續且 N 遞增**的 `Mn:` commit 屬於同一個 milestone group；**N 重設**（例如 M4 → M1）視為新任務開始 → 切新 group。
 
 `skip` 類的 commit 不會被獨立成 group，但若它**夾在**同類 group 中間，仍視為該 group 一部分。
 

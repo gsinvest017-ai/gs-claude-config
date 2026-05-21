@@ -60,6 +60,41 @@ Commit: `143aed3`。
 
 下一步：M4 — README + smoke test。
 
+### M4 — README + smoke test ✅
+
+**README**：目錄樹新增 `git-tag.md` / `git-tag/SKILL.md`
+
+**Smoke test 發現 bug → 修正**：
+
+在本 repo 跑 `git log --since="2026-05-21 00:00"` 後發現今天有兩串 `Mn:` 鏈（daily-summary 的 M1..M4 + git-tag 的 M1..M3）。原本的「連續 Mn 視為同 group」會把它們合成一個 group，這顯然不對。
+
+修正：加入「**N 重設則切新 group**」規則（M4 → M1 = 新任務開始）。SKILL.md 與 agents/git-tag.md 都已同步更新。
+
+**預期 dry-run 結果**（不真的執行，避免污染 tag 命名空間）：
+
+```
+[G1] feat  4 commits  →  feat/2026-05-21-1-link-daily-summary-in  on aa4f178
+       b3455b3  M1: scaffold progress doc for /daily-summary command
+       579d0d0  M2: add daily-summary subagent definition
+       3dc089c  M3: add /daily-summary slash command + skill
+       aa4f178  M4: link /daily-summary in README + smoke-test git query
+[G2] feat  3+1 commits  →  feat/2026-05-21-2-add-git-tag-slash-co  on <M4 of git-tag>
+       143aed3  M1: scaffold progress doc for /git-tag command
+       6498e9b  M2: add git-tag subagent definition
+       52f1fb3  M3: add /git-tag slash command + skill
+       <M4-hash>  M4: README + smoke test for /git-tag
+```
+
+兩個 group 都分到 `feat`（chain 內多次出現 "add" 關鍵字）。
+
+## 完成總結
+
+- 4 commits（M1 ~ M4）建立 `/git-tag` slash command
+- 觸發後抓今日 commits → 分類成 feat/fix/enh group → 在每 group 最後一個 commit 下 annotated tag
+- 預設 dry-run；`--apply` 才建 tag；`--push` 才推 remote（雙重明示）
+- 不會 force 覆蓋已存在 tag，不會 force-push
+- 支援 safe-yolo `Mn:` 鏈自動偵測（含 N 重設切 group）
+
 ## Fallback 指引
 
 若中途要 rollback：
