@@ -52,6 +52,14 @@ Commit: `143aed3`。
 
 下一步：M3 — slash command + skill。
 
+### M3 — slash command + skill ✅
+
+- `commands/git-tag.md`：精簡入口，含觸發範例與精簡流程
+- `skills/git-tag/SKILL.md`：完整規範，含分組演算法、slug 規則、Windows 注意事項；CRLF 已套用
+- Claude Code 自動偵測到 `git-tag` skill（system-reminder 確認）
+
+下一步：M4 — README + smoke test。
+
 ## Fallback 指引
 
 若中途要 rollback：
