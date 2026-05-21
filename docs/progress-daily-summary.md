@@ -38,6 +38,14 @@
 
 下一步：M3 — slash command + skill 檔。
 
+### M3 — slash command + skill ✅
+
+- `commands/daily-summary.md`：slim entry，列觸發範例與精簡流程
+- `skills/daily-summary/SKILL.md`：完整規範，含參數解析、CRLF 已套用
+- 已驗證 skill 被 Claude Code 偵測到（system-reminder 列出 daily-summary skill）
+
+下一步：M4 — README 連結 + smoke test。
+
 ## Fallback 指引
 
 若中途要 rollback：
