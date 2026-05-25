@@ -85,6 +85,7 @@ $filePaths     = @{}
 $bashCmds      = @{}
 $errorPatterns = @{}
 $sessionStats  = [System.Collections.Generic.List[object]]::new()
+$promptLog     = [System.Collections.Generic.List[object]]::new()
 $totalMessages = 0
 
 foreach ($s in $sessions) {
@@ -143,6 +144,19 @@ foreach ($s in $sessions) {
                     if ($cmd.Length -gt 200) { $cmd = $cmd.Substring(0,200) + '...' }
                     if ($bashCmds.ContainsKey($cmd)) { $bashCmds[$cmd]++ } else { $bashCmds[$cmd] = 1 }
                 }
+            }
+        }
+        elseif ($msg.type -eq 'user' -and $msg.message -and $msg.message.content -is [string]) {
+            $txt = ([string]$msg.message.content).Trim()
+            if ($txt -and -not $txt.StartsWith('<command-message>') -and -not $txt.StartsWith('<local-command-stdout>')) {
+                $ts = $null
+                if ($msg.timestamp) { try { $ts = [datetime]$msg.timestamp } catch {} }
+                $promptLog.Add([PSCustomObject]@{
+                    Timestamp = $ts
+                    Session   = $s.BaseName
+                    Cwd       = $msg.cwd
+                    Prompt    = $txt
+                })
             }
         }
         elseif ($msg.type -eq 'user' -and $msg.message -and $msg.message.content -is [array]) {
@@ -249,6 +263,26 @@ if ($Section -in 'errors','all') {
             ForEach-Object {
                 $sig = $_.Key -replace '\|','\|'
                 "| $($_.Value) | $sig |"
+            }
+    }
+}
+
+if ($Section -in 'prompts','all') {
+    Add-MdSection "Recent prompts (top $Top, newest first)" {
+        if ($promptLog.Count -eq 0) { '_No user prompts captured._'; return }
+        '| When | Session | Prompt |'
+        '|------|---------|--------|'
+        $promptLog |
+            Where-Object { $_.Timestamp } |
+            Sort-Object Timestamp -Descending |
+            Select-Object -First $Top |
+            ForEach-Object {
+                $shortId = $_.Session.Substring(0, [Math]::Min(8, $_.Session.Length))
+                $dateStr = $_.Timestamp.ToString('yyyy-MM-dd HH:mm')
+                $p = $_.Prompt -replace '\s+',' '
+                if ($p.Length -gt 140) { $p = $p.Substring(0,140) + '…' }
+                $p = $p -replace '\|','\|'
+                "| $dateStr | ``$shortId`` | $p |"
             }
     }
 }
