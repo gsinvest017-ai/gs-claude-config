@@ -58,6 +58,50 @@
 ## 後續可做（不在本次範圍）
 1. 清理 error signature 的 ANSI escape codes，提升可讀性
 2. 加入 trend 維度（同樣 metric 對比上週 vs 本週）
-3. 把 5 個 section 拆成 sub-skill 讓 Claude 按需呼叫，降低主 prompt token
+3. 把 8 個 section 拆成 sub-skill 讓 Claude 按需呼叫，降低主 prompt token
 4. 加 `-Json` 旗標讓輸出可餵給其他工具（例如直接生成 settings.json patch）
 5. 串接 `/fewer-permission-prompts` — cc-insights 抽到的高頻 Bash 自動 propose 給 allowlist
+
+---
+
+## v2：repo-scoped + 表面看不到的 info（後續迭代）
+
+### 目標
+使用者反饋：「希望 cc-insights 能更專門萃取『跟目前 repo 相關但 CLI 表面看不到』的資訊」。
+新增三個 section 主打 context recovery：過往 user prompts、subagent 報告 preview、git-uncommitted 檔案。
+
+### Milestones
+
+#### v2-M1 — `-Repo` 旗標 + auto-detect git root
+- commit `18da56a`
+- 加 `-Repo <path|auto>`：auto 會 `git -C $PWD rev-parse --show-toplevel`，找不到就退回 PWD
+- 訊息迴圈內依 `msg.cwd` prefix 過濾（case-insensitive、容忍尾端斜線）
+- header 顯示 active repo
+- ValidateSet 加入 `prompts` / `subagents` / `untracked` 占位
+
+#### v2-M2 — prompts section
+- commit `f709c2f`
+- 把 `type=user` 且 `content` 為 string 的 message 收集成 prompt log
+- 過濾 `<command-message>` / `<local-command-stdout>` 包裝
+- 按 timestamp DESC 排序，輸出 top N（截斷 140 chars）
+- 解決：「我上週在這 repo 試過什麼問題」context recovery
+
+#### v2-M3 — subagents + untracked sections
+- commit `74f7654`
+- **subagents**：抽 tool_use name='Agent' 的 description / subagent_type / prompt 開頭；用 `tool_use_id` 對應後續的 tool_result，撈 200 chars preview。表面上 Claude 主對話只顯示「Agent({...}) (~Nk tokens)」這種折疊，subagent 的研究產出很容易遺失
+- **untracked**：跑 `git -C $Repo status --porcelain`，cross-ref `$filePaths` heatmap。列出 Claude 動過但狀態是 `??` / `M` / `A` / `D` 的檔案。捕捉「改了一半沒 commit」的 WIP
+
+#### v2-M4 — SKILL.md 更新、CRLF、progress 補記、final commit
+- SKILL.md：description 擴寫提到 repo-scoped；觸發語句加入「這個 repo 之前做過什麼」「subagent 跑了什麼」「我有什麼沒 commit」；旗標表加 `-Repo`；section action 表擴成 8 列；新增執行步驟 2「判斷是否 repo-scoped」
+- 本進度檔新增 v2 段
+- final commit
+
+### 真實 smoke test 結果（在本 conversation 跑的）
+- `-Section subagents`：成功撈到 7ca37792 session 裡呼叫的 `claude-code-guide` agent（"Claude Code hidden log methods"），result preview 顯示 200 chars
+- `-Section untracked -Repo gs-claude-config`：列出 `Invoke-CCInsights.ps1` 為 `M`（modified）—因為當時 v2-M3 的 edits 還沒 commit
+- `-Repo C:\Users\User\autogo -Section tools -Days 30`：90 sessions / 18991 messages 正確 filter 到只剩 autogo 的活動
+
+### Fallback / rollback 指引（v2）
+- v2 的 3 個 commit 都是純加法（新欄位 / 新 section / 新旗標），未動到 v1 行為。要降版直接：
+  - `git revert 74f7654 f709c2f 18da56a` 即可回到 v1（bc8e077）
+- 完全移除 skill：`Remove-Item -Recurse skills/cc-insights/`，沒有任何全域副作用
