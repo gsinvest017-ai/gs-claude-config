@@ -52,10 +52,10 @@ if (-not (Test-Path $ProjectsRoot)) {
 
 if ($Repo -eq 'auto') {
     $here = (Get-Location).Path
-    $top = $null
-    try { $top = (& git -C $here rev-parse --show-toplevel 2>$null) } catch {}
-    if ($LASTEXITCODE -eq 0 -and $top) {
-        $Repo = ($top | Out-String).Trim() -replace '/', '\'
+    $gitRoot = $null
+    try { $gitRoot = (& git -C $here rev-parse --show-toplevel 2>$null) } catch {}
+    if ($LASTEXITCODE -eq 0 -and $gitRoot) {
+        $Repo = ($gitRoot | Out-String).Trim() -replace '/', '\'
     } else {
         $Repo = $here
     }
@@ -164,7 +164,15 @@ foreach ($s in $sessions) {
         }
         elseif ($msg.type -eq 'user' -and $msg.message -and $msg.message.content -is [string]) {
             $txt = ([string]$msg.message.content).Trim()
-            if ($txt -and -not $txt.StartsWith('<command-message>') -and -not $txt.StartsWith('<local-command-stdout>')) {
+            $skipPrefixes = @(
+                '<command-message>', '<command-name>', '<command-args>',
+                '<local-command-stdout>', '<local-command-caveat>',
+                '<bash-input>', '<bash-stdout>', '<bash-stderr>',
+                '<system-reminder>'
+            )
+            $isWrapper = $false
+            foreach ($p in $skipPrefixes) { if ($txt.StartsWith($p)) { $isWrapper = $true; break } }
+            if ($txt -and -not $isWrapper) {
                 $ts = $null
                 if ($msg.timestamp) { try { $ts = [datetime]$msg.timestamp } catch {} }
                 $promptLog.Add([PSCustomObject]@{
