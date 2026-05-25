@@ -20,6 +20,12 @@
 .PARAMETER ProjectFilter
     Substring match against the sanitized-cwd directory name (e.g. 'gs-strategy').
 
+.PARAMETER Repo
+    Repo-scoped mode. Pass an absolute path, or 'auto' to resolve the git
+    top-level from the current working directory. When set, only messages
+    whose `cwd` is at or under this path are included, and the report header
+    plus repo-specific sections (untracked) become available.
+
 .PARAMETER OutFile
     Optional path to also write the report to disk (UTF-8, no BOM).
 
@@ -29,9 +35,10 @@
 param(
     [int]$Days = 7,
     [int]$Top = 20,
-    [ValidateSet('tools','files','bash','errors','tokens','all')]
+    [ValidateSet('tools','files','bash','errors','tokens','prompts','subagents','untracked','all')]
     [string]$Section = 'all',
     [string]$ProjectFilter = '',
+    [string]$Repo = '',
     [string]$OutFile = '',
     [string]$ProjectsRoot = (Join-Path $env:USERPROFILE '.claude\projects')
 )
@@ -41,6 +48,22 @@ $ErrorActionPreference = 'Stop'
 if (-not (Test-Path $ProjectsRoot)) {
     Write-Output "ProjectsRoot not found: $ProjectsRoot"
     return
+}
+
+if ($Repo -eq 'auto') {
+    $here = (Get-Location).Path
+    $top = $null
+    try { $top = (& git -C $here rev-parse --show-toplevel 2>$null) } catch {}
+    if ($LASTEXITCODE -eq 0 -and $top) {
+        $Repo = ($top | Out-String).Trim() -replace '/', '\'
+    } else {
+        $Repo = $here
+    }
+}
+if ($Repo) {
+    $resolved = (Resolve-Path -LiteralPath $Repo -ErrorAction SilentlyContinue)
+    if ($resolved) { $Repo = $resolved.Path }
+    $Repo = $Repo.TrimEnd('\','/')
 }
 
 $cutoff = (Get-Date).AddDays(-$Days)
@@ -72,6 +95,13 @@ foreach ($s in $sessions) {
         $totalMessages++
         if (-not $line) { continue }
         try { $msg = $line | ConvertFrom-Json -ErrorAction Stop } catch { continue }
+
+        if ($Repo -and $msg.cwd) {
+            $msgCwd = ([string]$msg.cwd).TrimEnd('\','/')
+            if ($msgCwd -ne $Repo -and -not $msgCwd.StartsWith($Repo + '\', [StringComparison]::OrdinalIgnoreCase) -and -not $msgCwd.StartsWith($Repo + '/', [StringComparison]::OrdinalIgnoreCase)) {
+                continue
+            }
+        }
 
         if (-not $cwd -and $msg.cwd) { $cwd = $msg.cwd }
 
@@ -152,7 +182,8 @@ $sb = [System.Text.StringBuilder]::new()
 $null = $sb.AppendLine("# Claude Code Insights — last $Days days")
 $null = $sb.AppendLine("")
 $header = "Scanned **$($sessions.Count) sessions** / **$totalMessages messages** under ``$ProjectsRoot``"
-if ($ProjectFilter) { $header += " (filtered: ``$ProjectFilter``)" }
+if ($ProjectFilter) { $header += " (project filter: ``$ProjectFilter``)" }
+if ($Repo)          { $header += " (repo: ``$Repo``)" }
 $null = $sb.AppendLine($header)
 $null = $sb.AppendLine("")
 
