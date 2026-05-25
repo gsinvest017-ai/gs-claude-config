@@ -86,6 +86,7 @@ $bashCmds      = @{}
 $errorPatterns = @{}
 $sessionStats  = [System.Collections.Generic.List[object]]::new()
 $promptLog     = [System.Collections.Generic.List[object]]::new()
+$agentCalls    = [ordered]@{}
 $totalMessages = 0
 
 foreach ($s in $sessions) {
@@ -144,6 +145,21 @@ foreach ($s in $sessions) {
                     if ($cmd.Length -gt 200) { $cmd = $cmd.Substring(0,200) + '...' }
                     if ($bashCmds.ContainsKey($cmd)) { $bashCmds[$cmd]++ } else { $bashCmds[$cmd] = 1 }
                 }
+
+                if ($name -eq 'Agent' -and $c.id) {
+                    $ts = $null
+                    if ($msg.timestamp) { try { $ts = [datetime]$msg.timestamp } catch {} }
+                    $agentCalls[[string]$c.id] = [PSCustomObject]@{
+                        Id          = [string]$c.id
+                        Timestamp   = $ts
+                        Session     = $s.BaseName
+                        Cwd         = $msg.cwd
+                        SubagentType= [string]$c.input.subagent_type
+                        Description = [string]$c.input.description
+                        PromptHead  = if ($c.input.prompt) { ([string]$c.input.prompt).Substring(0, [Math]::Min(160, ([string]$c.input.prompt).Length)) } else { '' }
+                        ResultHead  = ''
+                    }
+                }
             }
         }
         elseif ($msg.type -eq 'user' -and $msg.message -and $msg.message.content -is [string]) {
@@ -161,6 +177,19 @@ foreach ($s in $sessions) {
         }
         elseif ($msg.type -eq 'user' -and $msg.message -and $msg.message.content -is [array]) {
             foreach ($c in @($msg.message.content)) {
+                if ($c.type -eq 'tool_result' -and $c.tool_use_id -and $agentCalls.Contains([string]$c.tool_use_id)) {
+                    $text = ''
+                    if ($c.content -is [string]) { $text = $c.content }
+                    elseif ($c.content) {
+                        $first = @($c.content)[0]
+                        if ($first.text) { $text = [string]$first.text }
+                    }
+                    if ($text) {
+                        $clean = ($text -replace '\s+',' ').Trim()
+                        if ($clean.Length -gt 200) { $clean = $clean.Substring(0,200) + '…' }
+                        $agentCalls[[string]$c.tool_use_id].ResultHead = $clean
+                    }
+                }
                 if ($c.type -eq 'tool_result' -and $c.is_error -eq $true) {
                     $text = ''
                     if ($c.content -is [string]) {
@@ -302,6 +331,87 @@ if ($Section -in 'tokens','all') {
                 $mdlStr  = if ($_.Model) { $_.Model } else { '-' }
                 "| ``$shortId`` | $dateStr | ``$cwdStr`` | $mdlStr | $($_.InputTok) | $($_.OutputTok) | $($_.CacheRead) |"
             }
+    }
+}
+
+if ($Section -in 'subagents','all') {
+    Add-MdSection "Subagent calls (top $Top, newest first)" {
+        if ($agentCalls.Count -eq 0) { '_No Agent tool_use invocations in scope._'; return }
+        '| When | Session | Subagent | Description | Result preview |'
+        '|------|---------|----------|-------------|----------------|'
+        $agentCalls.Values |
+            Where-Object { $_.Timestamp } |
+            Sort-Object Timestamp -Descending |
+            Select-Object -First $Top |
+            ForEach-Object {
+                $shortId = $_.Session.Substring(0, [Math]::Min(8, $_.Session.Length))
+                $dateStr = $_.Timestamp.ToString('yyyy-MM-dd HH:mm')
+                $sub     = if ($_.SubagentType) { $_.SubagentType } else { '(default)' }
+                $desc    = ($_.Description -replace '\s+',' ') -replace '\|','\|'
+                if ($desc.Length -gt 60) { $desc = $desc.Substring(0,60) + '…' }
+                $res     = ($_.ResultHead -replace '\|','\|')
+                if (-not $res) { $res = '_(no result captured)_' }
+                "| $dateStr | ``$shortId`` | $sub | $desc | $res |"
+            }
+    }
+}
+
+if ($Section -in 'untracked','all') {
+    Add-MdSection "Files Claude touched vs git state" {
+        if (-not $Repo) {
+            '_Requires `-Repo <path>` (or `-Repo auto`) — needs a real git repo to cross-reference._'
+            return
+        }
+        $gitOk = $false
+        try { & git -C $Repo rev-parse --is-inside-work-tree *>$null; if ($LASTEXITCODE -eq 0) { $gitOk = $true } } catch {}
+        if (-not $gitOk) {
+            "_$Repo is not a git work tree; skipping._"
+            return
+        }
+        $statusLines = & git -C $Repo status --porcelain 2>$null
+        $dirty = @{}
+        foreach ($ln in $statusLines) {
+            if (-not $ln) { continue }
+            $code = $ln.Substring(0,2)
+            $rel  = $ln.Substring(3)
+            if ($rel.Contains(' -> ')) { $rel = ($rel -split ' -> ')[-1] }
+            $rel = $rel.Trim('"')
+            $abs = (Join-Path $Repo $rel) -replace '/', '\'
+            $dirty[$abs] = $code.Trim()
+        }
+        $touchedInRepo = $filePaths.GetEnumerator() | Where-Object {
+            $_.Key -like "$Repo\*" -or $_.Key -like "$Repo/*"
+        }
+        if (-not $touchedInRepo) {
+            '_No files in this repo were touched by Claude in scanned sessions._'
+            return
+        }
+        $rows = foreach ($e in $touchedInRepo) {
+            $abs = $e.Key
+            $v   = $e.Value
+            $st  = if ($dirty.ContainsKey($abs)) { $dirty[$abs] } else { '' }
+            [PSCustomObject]@{
+                File   = $abs
+                Status = $st
+                Read   = $v.Read
+                Edit   = $v.Edit
+                Write  = $v.Write
+                Total  = $v.Read + $v.Edit + $v.Write
+                Dirty  = [bool]$st
+            }
+        }
+        $dirtyRows = $rows | Where-Object Dirty | Sort-Object Total -Descending | Select-Object -First $Top
+        if (-not $dirtyRows) {
+            '_All touched files are committed and tracked. ✓_'
+            return
+        }
+        '_Status codes: `??`=untracked, `M`=modified, `A`=added, `D`=deleted, `R`=renamed._'
+        ''
+        '| Status | File | Read | Edit | Write |'
+        '|--------|------|-----:|-----:|------:|'
+        foreach ($r in $dirtyRows) {
+            "| ``$($r.Status)`` | ``$($r.File)`` | $($r.Read) | $($r.Edit) | $($r.Write) |"
+        }
     }
 }
 
