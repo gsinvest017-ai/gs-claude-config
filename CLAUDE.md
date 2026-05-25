@@ -66,6 +66,23 @@ Other key files (read on demand):
 - `example/` — ATDF 台指期趨勢策略範例輸出（strategy md + 回測圖 + metrics json）
 - `add-new-skill.md` — Claude Code custom skill 安裝指南
 
+## autogo
+
+Path: `C:\Users\User\autogo` (Windows-native; the other repos run on Linux/WSL)
+Windows desktop screen agent — UIA-first, runtime 0 LLM. `autogo_dash` 是 dashboard 子系統：capture → segment → OCR → diff → fusion → REST。
+
+Entry doc:
+@C:\Users\User\autogo\CLAUDE.md
+
+Other key files (read on demand):
+- `web/app.py`, `web/static/dashboard.js`, `web/dashboard.html` — 主前後端
+- `src/autogo_dash/diff/{incremental,differ}.py` — diff pipeline
+- `src/autogo_dash/segment/{pp_structure,heuristic}.py` — segment（PP-StructureV3 + heuristic fallback）
+- `src/autogo_dash/server/{app,state}.py`、`src/autogo_dash/ocr/paddle.py`、`src/autogo_dash/fusion.py` — server / OCR / fusion core
+- `scripts/lib/{traced-harness,searxng-client}.mjs` — Playwright tracing 與 SearxNG client
+- `test-plans/` — 階段性手動測試劇本（含 RTX5090 系列）
+- `pyproject.toml` — `[tool.pytest.ini_options].addopts` 已內建 3 個 default-skip ignores
+
 ## tutorial
 
 Path: `/home/kevin/tutorial`
@@ -79,3 +96,15 @@ Other key files (read on demand):
 - `industry/semiconductor-supply-chain.md` / `.html` — 台灣半導體供應鏈 Mermaid 流程圖（IP → Fabless → Foundry → OSAT → Test）
 - `system-architecture/arch.drawio` — 端到端系統架構圖（draw.io 格式）
 - `harness-engineering/roadmap.drawio` — Harness 工程藍圖（NanoClaw Sandbox、Telemetry、Auto-Fix 等）
+
+---
+
+# Behavior rules
+
+兩條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
+
+**1. Edit/Write 前先 Read 一次**（避免 `<tool_use_error>File has not been read yet`）。
+特別在同檔多輪編輯後，formatter / linter / 另一個 Bash 指令可能改過內容；重 Read 比較穩。
+
+**2. Bash tool 中的 Windows 絕對路徑要 quote 或用正斜線**。
+反斜線會被 Bash 吃掉 — `ls C:\Users\User\autogo` 會變成 `ls C:UsersUserautogo` 然後失敗。寫成 `ls 'C:\Users\User\autogo'`、`ls "C:\Users\User\autogo"`、或 `ls /c/Users/User/autogo` 三選一。在 **PowerShell tool** 中沒這個問題，可正常用 `C:\...` 路徑。
