@@ -20,7 +20,79 @@
 
 ## 進度日誌
 
-（每完成一個 milestone 追加 `## Mn — <title>` 段落）
+### M1 — Skeleton + slim entry
+
+- 建立 `skills/prog-lang-tutor/SKILL.md`（六種 sub-mode：analyze / review / schedule / unschedule / list / inspect；含 per-language 知識點 taxonomy）
+- 建立 `commands/prog-lang-tutor.md` slim entry，args 容許 mode / repo / interval / `--force`
+- 建立 `docs/progress-prog-lang-tutor.md`
+- 因 `gs-claude-config/skills/` 已 symlink 到 `~/.claude/skills/`，新增即全域可用，下次 session 啟動時 `/prog-lang-tutor` 直接出現在 skills list
+- Commit: `d698ff3`
+
+### M2 — Persistence helper
+
+- 寫 `scripts/save-knowledge.ps1`：
+  - `-RepoPath` 自動 derive slug（leaf, lowercase, spaces→`_`）
+  - 驗證輸入 JSON 有 `knowledge_points` array 才寫
+  - Stamp `repo_path` / `repo_slug` / `language` / `analyzed_at` (ISO 8601 UTC)
+  - 預設不覆寫；要覆寫加 `-Force`
+  - 輸出 UTF-8 no-BOM 到 `data/<slug>/knowledge.json`
+- Commit: `d3cc8e1`
+
+### M3 — Popup + scheduler
+
+- `scripts/popup-review.ps1`：
+  - WinForms 視窗：topic header + question label + monospace code box + answer box（隱藏直到「Show Answer」）
+  - 三個按鈕：Show Answer / Got it / Skip
+  - 挑題策略：oldest `last_reviewed` → 最少 `reviewed_count` → random
+  - Skip 或從未按 Show Answer → 不更新 reviewed_count（避免「按 X 關掉」也計入）
+  - `-DryRun` 純 headless：印選到的知識點 metadata、不開 UI
+- `scripts/schedule-review.ps1`：
+  - 用 `Register-ScheduledTask` (modern API)；避開 `schtasks.exe` 的 quoting 地獄
+  - Trigger：`-Once -At now+1m -RepetitionInterval N min -RepetitionDuration 365d`
+  - Principal：`LogonType=Interactive`、`RunLevel=Limited`（不需 admin、popup 會跑在使用者 desktop）
+  - Settings：`AllowStartIfOnBatteries`、`MultipleInstances=IgnoreNew`、`ExecutionTimeLimit=10m`
+  - 守則：`IntervalMinutes < 15` 直接拒絕（防擾人）；> 1439 也拒
+- `scripts/unschedule-review.ps1`：傳 `-RepoSlug` 移除單一；不傳則清掉所有 `ClaudeCode-ProgLangTutor-Review-*`
+- 四個 script 全 `Parser::ParseFile` 通過
+- Commit: `a7e24ac`
+
+### M4 — Smoke test + docs
+
+- 手寫 4 點 PowerShell 知識銀行（splatting / `[CmdletBinding()]` / `$ErrorActionPreference='Stop'` / here-string）放到 `$env:TEMP\smoke-knowledge.json`
+- `save-knowledge.ps1` 跑成功 → 寫入 `data/gs-claude-config/knowledge.json`，4 points 正確 stamp
+- `popup-review.ps1 -DryRun` 跑成功 → 挑出 `ps-cmdletbinding-001`（4 points 都同分 last_reviewed=null、reviewed_count=0，random tiebreaker）
+- `schedule-review.ps1` 跑成功 → Task 進 `Ready` state、`LogonType=Interactive`、Next run = +1m
+- `unschedule-review.ps1` 立刻清掉 task（避免真的彈窗打擾使用者）
+- 加 `data/.gitignore`：runtime knowledge bank 不入版控，只保留 `.gitignore` 與 `README.md`
+- 加 `data/README.md`：schema 文件 + 手動編輯指引 + 刪除指令範例
+
+## 最終狀態
+
+```
+skills/prog-lang-tutor/
+├── SKILL.md
+├── scripts/
+│   ├── save-knowledge.ps1
+│   ├── popup-review.ps1
+│   ├── schedule-review.ps1
+│   └── unschedule-review.ps1
+└── data/
+    ├── .gitignore   # runtime banks 不入版控
+    └── README.md    # schema 文件
+
+commands/prog-lang-tutor.md   # slim entry
+```
+
+使用方法（任何 repo 內）：
+
+```bash
+/prog-lang-tutor                          # 分析當前 cwd
+/prog-lang-tutor analyze C:\path\to\repo
+/prog-lang-tutor schedule 30m <slug>      # 每 30 min popup
+/prog-lang-tutor review <slug>            # 在對話內抽考
+/prog-lang-tutor unschedule <slug>
+/prog-lang-tutor list
+```
 
 ## Fallback 指引
 

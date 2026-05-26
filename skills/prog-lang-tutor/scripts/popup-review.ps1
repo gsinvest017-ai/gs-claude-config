@@ -174,16 +174,23 @@ $btnSkip.Add_Click({
     $form.Close()
 })
 
-# ----- Show -----
+# ----- Show (or skip in DryRun) -----
+if ($DryRun) {
+    Write-Host "[DryRun] Picked knowledge point:"
+    Write-Host "  id:         $($pick.id)"
+    Write-Host "  topic:      $($pick.topic)"
+    Write-Host "  category:   $($pick.category)"
+    Write-Host "  difficulty: $($pick.difficulty)"
+    Write-Host "  reviewed:   $($pick.reviewed_count)"
+    Write-Host "  last:       $($pick.last_reviewed)"
+    Write-Host "[DryRun] Would have shown dialog + updated last_reviewed/reviewed_count."
+    exit 0
+}
+
 $form.Add_Shown({ $form.Activate() })
 [void]$form.ShowDialog()
 
-# ----- Update knowledge.json (skip if -DryRun or user skipped) -----
-if ($DryRun) {
-    Write-Host "[DryRun] Would have updated $($pick.id) — last_reviewed + reviewed_count"
-    exit 0
-}
-if ($script:userSkipped) {
+if (-not $script:answerShown -or $script:userSkipped) {
     exit 0
 }
 
