@@ -36,6 +36,15 @@
 - 含 `.gitattributes` 範本、`git add --renormalize` 流程、「全域註冊」說明（呼應 chezmoi / gs-claude-config）、與 `/one-button-launch` 及 CLAUDE.md Behavior rules 的協作。
 - 兩檔正規化為 CRLF。
 
+### M3 — 驗證全域註冊 + 收尾
+
+- 兩支 SKILL.md 驗證通過：frontmatter 以 `---` 起始、`name:` 與檔名一致、`description:` 非空、全檔 CRLF（LF-only = 0）。
+- 兩支均已即時出現在 Claude Code 的 available-skills 清單（`/one-button-launch`、`/platform-compatible`），由 user-scope `~/.claude/skills/` 取得 → **全域可用**，無需 restart。
+- 工作樹乾淨；唯二 untracked（`docs/progress-cc-insights-followup.md`、`skills/autogo/`）為本任務前既存，未動。
+- commit 範圍：`79f66e5`(M1) → `6c6b6d5`(M2) → 本 commit(M3)，全在本機 `main`，**未 push**。
+
+**任務完成**：兩個全域 slash command 已建立並註冊。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`，remote `origin` = github.com/gsinvest017-ai/gs-claude-config.git。
