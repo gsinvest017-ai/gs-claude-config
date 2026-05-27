@@ -25,6 +25,15 @@
   3. **update 預設不覆蓋人工內容**，用 `<!-- BEGIN/END write-spec: <section> -->` 區塊標記只更新自己維護的段落。
 - 兩檔正規化為 CRLF（與既有 skill 一致）。
 
+### M2 — 驗證全域註冊 + 收尾
+
+- `skills/write-spec/SKILL.md` 驗證通過：以 `---` 起始、`name: write-spec` 與檔名一致、`description:` 非空、全檔 CRLF（LF-only = 0）。
+- 已即時出現在 Claude Code 的 available-skills 清單（`/write-spec`），由 user-scope `~/.claude/skills/` 取得 → **全域可用**，無需 restart。
+- 工作樹乾淨（`skills/write-spec` 與本進度檔皆已 commit）。
+- commit 範圍：`d987aec`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。
+
+**任務完成**：`/write-spec` 全域 slash command 已建立並註冊。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`，remote `origin` = github.com/gsinvest017-ai/gs-claude-config.git。
