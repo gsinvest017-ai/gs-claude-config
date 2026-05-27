@@ -29,6 +29,13 @@
 - 驗證：`one-button-launch` 已即時出現在 available-skills 清單，無需 restart。
 - 決策：auto 模式一律同時產 `run.sh` + `run.ps1` 作為跨平台最低基準，而非只賭目標機有 make/just/docker。
 
+### M2 — /platform-compatible
+
+- 新增 `skills/platform-compatible/SKILL.md`：frontmatter + 八大稽核類別（A 路徑 / B shell 腳本 / C 換行+.gitattributes / D 檔名大小寫+保留字 / E 環境變數 / F 原生相依 / G 編碼 / H CI matrix），每類含偵測 pattern 與修正策略。
+- 設計：**預設 dry-run 出嚴重度報告，需 `--fix` 才改檔**；原則是「補相容層不是拔支援」（有 .sh 就補 .ps1，不刪 .sh）。
+- 含 `.gitattributes` 範本、`git add --renormalize` 流程、「全域註冊」說明（呼應 chezmoi / gs-claude-config）、與 `/one-button-launch` 及 CLAUDE.md Behavior rules 的協作。
+- 兩檔正規化為 CRLF。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`，remote `origin` = github.com/gsinvest017-ai/gs-claude-config.git。
