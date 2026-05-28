@@ -47,6 +47,29 @@ ln -s /mnt/c/Users/User/gs-claude-config/CLAUDE.md ~/.claude/CLAUDE.md
 
 <!-- M2 / M3 待續 -->
 
+### M2 — Windows / WSL system global skills/commands 差異盤點
+
+**diff 表**：
+
+| 類別 | Linux-only | Windows-only | 共有數 |
+|------|-----------|-------------|--------|
+| skills   | `lean-explain`、`lean-mil`、`lean-prove`、`update-doc`*、`web-snapshot`* | `autogo`、`cc-insights`、`copy-commits-button`、`one-button-launch`、`platform-compatible`、`prog-lang-tutor`、`set-serve-eth`、`ui-compact`、`write-spec` | 7 |
+| commands | `lean-explain.md`、`lean-mil.md`、`lean-prove.md`、`update-doc.md`* | `prog-lang-tutor.md` | 11 |
+| agents   | (無) | (無) | 5 |
+
+*打星號 = Linux 端未 commit 的 WIP（不在本次合併範圍內）。
+
+**Git 史**：兩邊 `main` 真的 diverged——Windows clone 連 Linux 那條 commit chain 都沒 fetch 過（`merge-base` 直接 fail），代表兩個 clone 從某個共同祖先各自往不同方向走。
+
+**OS-specific 內容掃描結論**：差異**幾乎沒有**「另一個 OS 上會壞」的硬內容。出現在 skill 文字裡的 `C:\Users\...` / `/home/...` / `PowerShell` 大多是**註解、範例、跨平台對照**，不是 runtime 路徑。**真正只在單一 OS 才有意義的 skill**（會「在另一 OS 上觸發但沒效」）：
+- `cc-insights`（呼叫 `Invoke-CCInsights.ps1` → Windows-only）
+- `language-tutor`（TTS 走 `speak.ps1` → Windows-only）
+- `autogo`（瞄準 Windows desktop / OCR → Windows-only）
+- `lean-*`（Linux 上 Lean4 / Mathlib 開發較常見，但 skill 本身是 markdown，跨 OS 可載入）
+
+**結論**：分歧不是 **OS-difference**，是 **sync drift**（兩個 clone 各自 commit 沒互相 push/pull）。
+
+
 ## Fallback 指引
 
 - 全部還原成「WSL 用自家 Linux clone」：
