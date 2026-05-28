@@ -27,6 +27,15 @@
   5. **整合 Chrome DevTools / Playwright MCP** 作為量測後端（前後 scrollHeight 對照 + 截圖）。
 - 兩檔正規化為 CRLF。
 
+### M2 — 驗證全域註冊 + 收尾
+
+- `skills/ui-compact/SKILL.md` 驗證通過：以 `---` 起始、`name: ui-compact` 與檔名一致、`description:` 非空、全檔 CRLF（LF-only = 0）。
+- 已即時出現在 Claude Code 的 available-skills 清單（`/ui-compact`），由 user-scope `~/.claude/skills/` 取得 → **全域可用**，無需 restart。
+- 工作樹乾淨（`skills/ui-compact` 與本進度檔皆已 commit）。
+- commit 範圍：`6d5d18b`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。
+
+**任務完成**：`/ui-compact` 全域 slash command 已建立並註冊。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`，remote `origin` = github.com/gsinvest017-ai/gs-claude-config.git。
