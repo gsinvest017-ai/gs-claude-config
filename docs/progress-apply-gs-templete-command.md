@@ -38,6 +38,14 @@
   6. **保留 skill 名稱拼寫 `apply-gs-templete`**（templete）配合使用者 slash command 拼法
 - 兩檔正規化為 CRLF。
 
+### M2 — 驗證全域註冊 + 收尾
+
+- `skills/apply-gs-templete/SKILL.md`：以 `---` 起、`name: apply-gs-templete` 與檔名一致、description `: ` count = 0（避開上次 copy-commits-button 撞到的 YAML 坑）、全檔 CRLF（LF-only = 0）。
+- 已即時出現在 available-skills 清單，由 user-scope 取得 → **全域可用**，無需 restart（WSL 端透過 M1 的 symlink 自動同步可見）。
+- commit 範圍：`da71cf3`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。
+
+**任務完成**：`/apply-gs-templete` 全域 slash command 已建立並註冊。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`。
