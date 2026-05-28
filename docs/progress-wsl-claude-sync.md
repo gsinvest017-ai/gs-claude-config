@@ -69,6 +69,32 @@ ln -s /mnt/c/Users/User/gs-claude-config/CLAUDE.md ~/.claude/CLAUDE.md
 
 **結論**：分歧不是 **OS-difference**，是 **sync drift**（兩個 clone 各自 commit 沒互相 push/pull）。
 
+### M3 — Method 3 決策 + Linux-only skill 合併
+
+**Method 3（chezmoi 模板化）決策：❌ 不採用（at least not for skills/commands）**
+
+理由：
+- chezmoi 模板化解的是 **OS-difference**（同一份 source 在不同 OS 展開成不同檔），但 M2 顯示我們的分歧根本不是這個——是兩個 clone sync drift。
+- 真正 OS-specific runtime 行為只在 3 個 skill（`cc-insights` / `language-tutor` / `autogo`），且這些 skill **本身是 markdown，跨 OS 都能載入**；只是在錯誤 OS 上觸發時不會跑到底——這完全不需要 chezmoi 解。
+- 為了一個其實單純的 sync drift 引入 chezmoi 模板層 = 用大砲打蚊子，且未來新增 skill 要記得處理模板規則，維護成本反而上升。
+
+**對症的作法 = 真正執行 Method 1（單一 source of truth）並把 Linux-only 內容合併到 canonical source**：
+
+1. WSL `~/.claude/*` 指向 `/mnt/c/Users/User/gs-claude-config/`（M1 已完成）
+2. 把 Linux clone 已 commit 的 `lean-prove` / `lean-explain` / `lean-mil` skill + 對應 command **複製進** Windows clone，CRLF 正規化後 commit（本 milestone 動作）
+3. Linux clone 未 commit 的 WIP（`update-doc`、`web-snapshot`）**不動**——留在 `/home/kevin/gs-claude-config/` 給使用者自行決定何時 commit 並複製過來
+4. 之後就只有一個 canonical source：Windows clone。Linux clone 變成歷史備份，不再被 `~/.claude` 引用，可考慮日後刪除或 archive
+
+**動作執行（已完成）**：
+- `cp -r /home/kevin/gs-claude-config/skills/{lean-prove,lean-explain,lean-mil} /mnt/c/.../skills/`
+- `cp /home/kevin/gs-claude-config/commands/lean-{prove,explain,mil}.md /mnt/c/.../commands/`
+- 6 個檔正規化為 CRLF（LF-only = 0），與既有 Windows skill 慣例一致
+- 立即驗證：available-skills 清單現在含 `lean-explain` / `lean-mil` / `lean-prove`，與 Windows 原本 16 skill 共 **19 個**全部可由 WSL Claude 透過 symlink 看到
+
+**例外保留（未來可選工程）**：若日後真的需要某個 skill 在不同 OS 顯示不同行為，再回頭把那一個 skill **單獨**用 chezmoi 模板就好——不必整套搬到 chezmoi。
+
+**任務完成**：M1（symlink 切到 /mnt/c）+ M2（diff 盤點）+ M3（不採 chezmoi、改為合併 Linux-only 內容到 canonical source）。
+
 
 ## Fallback 指引
 
