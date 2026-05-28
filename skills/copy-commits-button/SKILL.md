@@ -1,6 +1,6 @@
 ---
 name: copy-commits-button
-description: 在當前專案 dashboard 的 panel 注入一個「📋 複製今日 commits」按鈕，按一下就把該 repo 當日 commits 以 markdown 格式寫進剪貼簿（含 safe-yolo Mn: 鏈合併、分類、commit 列表），方便使用者貼到工作群組訊息。偵測 dashboard 載體（HTML / Streamlit / Gradio / Plotly Dash / React / Vue），可同時支援多 repo（一 repo 一 panel 一按鈕），自動接上後端 endpoint（若需要）。當使用者輸入 /copy-commits-button、說「dashboard 加複製按鈕」、「一鍵複製今日 commits」、「把當日 milestone 貼到群組」、「分享今天的 commit 到 chat」、「在 panel 上加 copy markdown 按鈕」時啟動。預設 dry-run，需 --apply 才改檔。
+description: 在當前專案 dashboard 的 panel 注入一個「📋 複製今日 commits」按鈕，按一下就把該 repo 當日 commits 以 markdown 格式寫進剪貼簿（含 safe-yolo Mn 鏈合併、分類、commit 列表），方便使用者貼到工作群組訊息。偵測 dashboard 載體（HTML / Streamlit / Gradio / Plotly Dash / React / Vue），可同時支援多 repo（一 repo 一 panel 一按鈕），自動接上後端 endpoint（若需要）。當使用者輸入 /copy-commits-button、說「dashboard 加複製按鈕」、「一鍵複製今日 commits」、「把當日 milestone 貼到群組」、「分享今天的 commit 到 chat」、「在 panel 上加 copy markdown 按鈕」時啟動。預設 dry-run，需 --apply 才改檔。
 ---
 
 # /copy-commits-button — Dashboard 一鍵複製今日 commits（markdown）

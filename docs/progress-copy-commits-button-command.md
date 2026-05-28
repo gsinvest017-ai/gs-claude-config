@@ -27,6 +27,16 @@
   5. **三種 placement** 涵蓋常見配置：新建集中面板 / 每 repo 既有 panel 加按鈕 / 全域 toolbar。
 - 兩檔正規化為 CRLF。
 
+### M2 — 修 YAML frontmatter bug + 驗證全域註冊 + 收尾
+
+- **驗證時抓到的問題**：available-skills 清單顯示 `copy-commits-button` 的 description 變成 H1 標題而不是 frontmatter description——其他 skill 沒這狀況。
+- **根因**：frontmatter 的 description 是 unquoted YAML scalar，內含 `Mn: 鏈合併`（`:` 後面有空白）被 YAML parser 當成 mapping key，整個 description 解析中斷。
+- **修法**：把 `Mn: 鏈合併` 改成 `Mn 鏈合併`（移除冒號），與既有所有 skill 一致採 unquoted scalar，最低侵入；body 內仍可保留 `Mn:` 寫法。
+- 驗證：`name: copy-commits-button` 與檔名一致、`description:` 非空、全檔 CRLF（LF-only = 0）、frontmatter 仍以 `---` 起始。下一次 session 重新解析 frontmatter 即會顯示正確 description。
+- commit 範圍：`bca1972`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。
+
+**任務完成**：`/copy-commits-button` 全域 slash command 已建立並註冊，frontmatter parsing 修正。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`（透過 `~/.claude` symlink 存取），分支 `main`，remote `origin` = github.com/gsinvest017-ai/gs-claude-config.git。
