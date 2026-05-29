@@ -35,6 +35,14 @@
   6. **`--split`** 大型 / monorepo 可拆 unit / integration / e2e / coverage 四檔
 - 兩檔正規化為 CRLF。
 
+### M2 — 驗證全域註冊 + 收尾
+
+- `skills/test-plan/SKILL.md`：以 `---` 起、`name: test-plan` 與檔名一致、description colon-space count = 0（避開 YAML 坑）、全檔 CRLF（LF-only = 0）。
+- 已即時出現在 available-skills 清單（`/test-plan`），由 user-scope 取得 → **全域可用**，無需 restart。WSL 端透過稍早建好的 `/mnt/c` symlink 也立即可見。
+- commit 範圍：`420c268`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。
+
+**任務完成**：`/test-plan` 全域 slash command 已建立並註冊。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`，分支 `main`，未 push。
