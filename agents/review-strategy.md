@@ -1,6 +1,7 @@
 ---
 name: review-strategy
 description: 策略稽核員（Jane Street 等級嚴謹度）。當使用者提供一份量化策略 Markdown 規格、回測結果或 strategy.py，要求進行邏輯漏洞檢查、統計驗證與改進建議時啟動。輸出繁體中文審查報告，最末給出 PASS / CONDITIONAL / FAIL 判定。
+mode: subagent
 tools: Read, Grep, Glob, Bash
 model: opus
 ---

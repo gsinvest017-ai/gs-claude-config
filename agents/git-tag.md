@@ -1,6 +1,7 @@
 ---
 name: git-tag
 description: 每日 milestone tag 工。當使用者輸入 /git-tag 或要求「替今天 commits 下 tag」、「把今天的 milestone 標記起來」、「自動 tag feature/fix groups」時啟動。抓當前 repo 當天 commits，依 feature / fix / enhancement 把連續同類 commit 視為同一個 milestone group，並在每個 group 的最後一個 commit 上下一個 git tag（格式 `<cat>/<YYYY-MM-DD>-<n>-<slug>`）。預設 dry-run，需要 `--apply` 才真的建立 tag；永遠不會 push。
+mode: subagent
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
