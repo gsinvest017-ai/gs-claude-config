@@ -101,10 +101,17 @@ Other key files (read on demand):
 
 # Behavior rules
 
-兩條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
+三條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
 
 **1. Edit/Write 前先 Read 一次**（避免 `<tool_use_error>File has not been read yet`）。
 特別在同檔多輪編輯後，formatter / linter / 另一個 Bash 指令可能改過內容；重 Read 比較穩。
 
 **2. Bash tool 中的 Windows 絕對路徑要 quote 或用正斜線**。
 反斜線會被 Bash 吃掉 — `ls C:\Users\User\autogo` 會變成 `ls C:UsersUserautogo` 然後失敗。寫成 `ls 'C:\Users\User\autogo'`、`ls "C:\Users\User\autogo"`、或 `ls /c/Users/User/autogo` 三選一。在 **PowerShell tool** 中沒這個問題，可正常用 `C:\...` 路徑。
+
+**3. Git commit message 的主體用繁體中文撰寫**。所有由 Claude 觸發的 `git commit`（含 `safe-yolo Mn:` 鏈、單發 `feat:` / `fix:` / `refactor:`、merge / revert）一律以繁體中文寫主體描述句。
+- **保留原文**：commit prefix（`Mn:` / `feat:` / `fix:` 等）、git trailer（`Co-Authored-By:` / `Signed-off-by:` / `Refs:`）、技術識別符（檔名、函式、`--apply` / `--force` 等 CLI flag、`SKILL.md`、`gs-trading-portal` 等專案名）、引用的英文錯誤訊息原樣。
+- **格式**：subject ≤ 72 字（不含 prefix），延續 safe-yolo「不要寫小說」原則——背景與細節寫進 body 或進度檔，不塞 subject。
+- **例外**：純機械式工具產生的 commit（dependabot bump、lockfile 重生、auto-merge）保留工具預設訊息；他人撰寫的 commit 不改。
+- **Why**：使用者主要語言為繁體中文，commit log 由本人直接 review，中文閱讀效率高；同時讓 `/git-tag` 切 milestone group / `/daily-summary` / `/copy-commits-button` 產出的中文摘要與 commit 標題語感一致，貼到工作群組不會有語言斷層。
+- **How to apply**：寫 commit message 前先想中文版主體，再決定要不要加 ASCII prefix；如果不確定某段該不該翻（如 stack trace、API 路徑），原樣保留並用中文做框架說明（例：`修正 /api/today-commits 在 path traversal 下回 500 的 bug`）。
