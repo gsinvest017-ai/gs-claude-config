@@ -30,6 +30,15 @@
 - 本任務從本 commit 起，**commit message 即以繁體中文寫**（dogfood）。
 - 兩檔正規化為 CRLF。
 
+### M2 — 驗證 + 收尾
+
+- CLAUDE.md 內「三條 cross-repo 規則」標題與第 3 條規則內容皆已寫入；CRLF 一致（LF-only = 0）。
+- WSL 端透過 `/mnt/c/Users/User/gs-claude-config/CLAUDE.md` symlink 即時看到新規則（grep 命中），不需重新 sync。
+- 工作樹乾淨，M1 commit `8efb151`，本 M2 commit 接續。
+- commit 範圍：`8efb151`(M1) → 本 commit(M2)，全在本機 `main`，**未 push**。兩個 commit subject 均為繁體中文，已 dogfood 第 3 條規則。
+
+**任務完成**：commit message 中文化 spec 已寫進全域 CLAUDE.md，下一個 session 起所有 repo 都會載入此規則並套用。
+
 ## Fallback 指引
 
 - Git repo：`C:\Users\User\gs-claude-config`，分支 `main`。
