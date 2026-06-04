@@ -43,6 +43,18 @@ UserPromptSubmit hook 通常注入以下**三個區塊**在 turn 開頭：
 - `watchers[].output.timings_ms` — `capture` / `list_windows` / `incremental` / `fuse` / `total`
 - `watchers[].output.cache_meta` — `hit` / `changed_regions` / `phash_distance` / `fresh_blocks` / `cached_blocks` / `cache_size` / `ttl_remaining_ms`
 
+**在輸出 OCR 詳細內容前，先做 cache_meta 無變化判斷：**
+
+條件：watcher 的 `output.cache_meta.hit = true` 且 `phash_distance = 0`（或 `phash_distance` 欄位不存在）→ 該 watcher 標記為「無變化」。
+
+- **所有 watcher 均無變化** → 回覆下列內容後**停止**，不輸出任何 OCR 詳細內容：
+
+  > **畫面無變化（cached）**：N 個 watcher 均命中快取（phash_distance=0），畫面內容與上次相同。若要強制刷新，請在 dashboard 按「Full pipeline」或等下一次 watcher tick。
+
+  接著加標準 footer 後結束。
+
+- **部分 watcher 有變化** → 只對有變化（`hit=false` 或 `phash_distance > 0`）的 watcher 輸出完整 OCR 結果；無變化的 watcher 只附一行：`⬜ [app] title — 無變化（cached，phash_distance=0）`，不展開 text_blocks。
+
 用這些**結構化資料**回答 user 問題（例如「Status [1] block 的 confidence 多少」「最大的 panel bbox 是哪個」「pipeline 慢在哪一步」）、繁中、開頭點 watcher 來源。Footer 加：
 
 > _autogo context 來自 N 個 watcher（拉取時間 X 秒前）；若需更新請等下一次 watcher tick 或在 dashboard 重按一次 `🎯 Watch selected`。_
@@ -67,3 +79,23 @@ OCR 結果**會錯字、漏字、繁簡混雜**：
 - ❌ **不要** echo `[autogo-response]` / `[autogo-json]` / `[/autogo-json]` sentinel 本身、也不要 echo 整段 JSON 給 user（JSON 是給你 introspect 用的、user 自己會去 dashboard Copy JSON）。
 - ❌ **不要** 把 OCR 文字當 deterministic source of truth 下重大決策（請 user 在 `/inspect` 親眼確認）。
 - ❌ **不要** 在 FULL PATH 引用 `confidence` 數字後就拍胸脯「這個 95% 對」—— confidence 是模型自評、不等於正確率。需要 deterministic 時請 user 在 `/inspect` 對。
+
+## 搭配 /loop 做定期監控
+
+`/autogo` 本身是一次性 pull；若要**定期把畫面更新推進 Claude context**，搭配 `/loop` 使用：
+
+```
+/loop 30s /autogo -w <alias> 有沒有什麼變化
+```
+
+- `/loop` 每 N 秒重新觸發一次 `/autogo`；hook 會拉新一輪快照注入 context
+- 搭配 cache_meta 無變化判斷：若畫面沒動，Claude 只回「畫面無變化（cached）」，不浪費 context
+- Watcher 的 tick interval（畫面擷取頻率）是在 dashboard UI 的 `interval(s)` 欄位設定，與 `/loop` 間隔獨立——建議 `/loop` 間隔 ≥ watcher tick interval，避免每次都拉到同一張快照
+
+**常用場景範例：**
+
+| 指令 | 說明 |
+|------|------|
+| `/loop 30s /autogo -w outlook 有新信嗎` | 每 30 秒檢查一次 Outlook，有新信才說 |
+| `/loop 60s /autogo -w mock-calc 數字變了嗎` | 每分鐘看 Calculator 顯示值是否改變 |
+| `/loop 10s /autogo -w autogo 說明 pipeline 狀態` | 每 10 秒回報 autogo dashboard pipeline 進度 |
