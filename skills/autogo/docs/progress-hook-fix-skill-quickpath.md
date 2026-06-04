@@ -14,8 +14,8 @@
 ## 計畫 milestone
 
 - [x] M1：修 `autogo-prefetch.ps1` regex（ASCII-only alias）+ 更新 hook 文件說明
-- [ ] M2：SKILL.md 加「有沒有變化」快捷路徑 + 修 /loop 範例 interval
-- [ ] M3：建本進度檔並 commit
+- [x] M2：SKILL.md 加「有沒有變化」快捷路徑 + 修 /loop 範例 interval（30s→1m + 警告）
+- [x] M3：進度檔更新並 commit
 
 ## 進度日誌
 

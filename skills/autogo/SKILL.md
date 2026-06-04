@@ -55,6 +55,17 @@ UserPromptSubmit hook 通常注入以下**三個區塊**在 turn 開頭：
 
 - **部分 watcher 有變化** → 只對有變化（`hit=false` 或 `phash_distance > 0`）的 watcher 輸出完整 OCR 結果；無變化的 watcher 只附一行：`⬜ [app] title — 無變化（cached，phash_distance=0）`，不展開 text_blocks。
 
+**變化偵測快捷路徑（`cache_meta` 缺失時）：**
+
+若 `cache_meta` 欄位不存在（stub backend 常見），且問題是純粹的「有沒有変化」類查詢（不需要詳細 OCR 內容），使用快捷路徑而不是讀完整 JSON：
+
+1. 在對話 context 中記住上次觀測的「key display values」（例如計算機顯示的數字、主要顯示欄位內容）。
+2. 用 Grep tool 在 persisted 檔中搜尋這些關鍵值（例如 `grep "1024|1280"` 確認計算機數字）。
+3. 若 Grep 找到且值相同 → 回覆「畫面無變化」，**停止**，不讀完整 JSON。
+4. 若 Grep 找不到或值不同 → 改用完整讀取流程（Read persisted 檔 → parse calc.exe 段）。
+
+此快捷路徑節省 Read + parse 兩個 tool call（對 60–100KB 檔案效果明顯）。只適用於「有沒有変化」這類簡單比較，複雜 debug 查詢仍走完整 JSON 路徑。
+
 用這些**結構化資料**回答 user 問題（例如「Status [1] block 的 confidence 多少」「最大的 panel bbox 是哪個」「pipeline 慢在哪一步」）、繁中、開頭點 watcher 來源。Footer 加：
 
 > _autogo context 來自 N 個 watcher（拉取時間 X 秒前）；若需更新請等下一次 watcher tick 或在 dashboard 重按一次 `🎯 Watch selected`。_
@@ -85,17 +96,18 @@ OCR 結果**會錯字、漏字、繁簡混雜**：
 `/autogo` 本身是一次性 pull；若要**定期把畫面更新推進 Claude context**，搭配 `/loop` 使用：
 
 ```
-/loop 30s /autogo -w <alias> 有沒有什麼變化
+/loop 1m /autogo -w <alias> 有沒有什麼變化
 ```
 
-- `/loop` 每 N 秒重新觸發一次 `/autogo`；hook 會拉新一輪快照注入 context
+- `/loop` 每 N 分鐘重新觸發一次 `/autogo`；hook 會拉新一輪快照注入 context
 - 搭配 cache_meta 無變化判斷：若畫面沒動，Claude 只回「畫面無變化（cached）」，不浪費 context
 - Watcher 的 tick interval（畫面擷取頻率）是在 dashboard UI 的 `interval(s)` 欄位設定，與 `/loop` 間隔獨立——建議 `/loop` 間隔 ≥ watcher tick interval，避免每次都拉到同一張快照
+- ⚠️ **最小間隔為 1 分鐘**：cron 粒度限制，`30s` 會自動進位為 `1m`。若需真正 30 秒觸發，改用 `/loop`（無 interval）並讓 Claude 以 ScheduleWakeup 自迴圈
 
 **常用場景範例：**
 
 | 指令 | 說明 |
 |------|------|
-| `/loop 30s /autogo -w outlook 有新信嗎` | 每 30 秒檢查一次 Outlook，有新信才說 |
-| `/loop 60s /autogo -w mock-calc 數字變了嗎` | 每分鐘看 Calculator 顯示值是否改變 |
-| `/loop 10s /autogo -w autogo 說明 pipeline 狀態` | 每 10 秒回報 autogo dashboard pipeline 進度 |
+| `/loop 1m /autogo -w outlook 有新信嗎` | 每分鐘檢查一次 Outlook，有新信才說 |
+| `/loop 1m /autogo -w mock-calc 數字變了嗎` | 每分鐘看 Calculator 顯示值是否改變 |
+| `/loop 5m /autogo -w autogo 說明 pipeline 狀態` | 每 5 分鐘回報 autogo dashboard pipeline 進度 |
