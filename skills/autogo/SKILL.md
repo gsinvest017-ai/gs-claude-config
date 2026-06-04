@@ -47,6 +47,7 @@ cache_hit_all: true|false
 text_blocks_total: N
 pipeline_slow: true|false
 pipeline_ms_max: N
+top_ocr_unchanged: true|false
 ```
 
 **路由決策表（依序靜默執行；不要把路由過程、tool call 前旁白、內部推理輸出給 user；第一個命中即 STOP）：**
@@ -54,6 +55,7 @@ pipeline_ms_max: N
 | 條件 | 回應 |
 |------|------|
 | `filter_unmatched` 非空陣列 | 開頭提醒「alias `X` 沒匹配到任何 watch 中的視窗，請去 /dash 確認」，**STOP** |
+| `top_ocr_unchanged: true` 且問題是通用描述（「你看到甚麼」「畫面上有什麼」「有沒有変化」） | 回覆「**畫面無變化**：Top OCR 與上次相同。」加標準 footer，**STOP**（不讀 JSON） |
 | `stub: true` 且問題是通用描述（「畫面上有什麼」「這個視窗顯示什麼」） | 回覆「⚠️ Stub backend：固定 stub 資料，不反映真實視窗。若要看真實畫面請安裝 PaddleOCR 並設 `AUTOGO_DASH_BACKEND=windows`。」加標準 footer，**STOP** |
 | `stub: true`（非通用描述） | 前置加 `⚠️ Stub backend：畫面內容為固定 stub 資料` |
 | `cache_hit_all: true` | 回覆「**畫面無變化（cached）**：N 個 watcher 均命中快取，若要刷新請按 Full pipeline 或等下一次 tick」，加標準 footer，**STOP** |
