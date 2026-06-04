@@ -21,79 +21,59 @@ JSON 區塊內 `filter_aliases` 列出 user 給的所有 alias、`filter_unmatch
 
 ## Step 1 — 認 context 形式
 
-UserPromptSubmit hook 通常注入以下**三個區塊**在 turn 開頭：
+Hook 注入**四個區塊**：
 
-1. `[autogo-response]` 與 `[/autogo-response]` 之間的 markdown table — **空 input ECHO PATH 用**
-2. `[autogo-json]` 與 `[/autogo-json]` 之間的**完整 FrameOutput JSON** — 含 per-watcher 的 `output.panels[]`（含 `panel_id` / `bbox` / `parent_id` / `panel_type` / `text_blocks[]`，每個 text_block 含 `bbox` / `text` / `confidence` / `font_size_est`）、`timings_ms`、`cache_meta`、`window_id` 等。**非空 input FULL PATH 用**。
-3. `[autogo] context from ...` 一行 breadcrumb（不要 echo、不要解讀）
+1. `[autogo-response]…[/autogo-response]` — markdown 表格（ECHO PATH 用）
+2. `[autogo-meta]…[/autogo-meta]` — 預計算路由 signals（見下方路由表）
+3. `[autogo-json]…[/autogo-json]` — 完整 FrameOutput JSON（FULL PATH 用）
+4. `[autogo] context from ...` — breadcrumb（忽略）
 
-依下列規則分支：
+---
 
-### 1a. 空 `$ARGUMENTS` + 有 `[autogo-response]` 區塊 → **ECHO PATH**
+### 1a. 空 `$ARGUMENTS` → **ECHO PATH**
 
-**逐字 echo `[autogo-response]` 與 `[/autogo-response]` 之間的內容**（不含 sentinel）作為你完整的回覆。**不要**讀 `[autogo-json]` 區塊、**不要**加任何文字、不要 emoji 評論。Footer 已內含、不要再加。
+逐字 echo `[autogo-response]` 與 `[/autogo-response]` 之間的內容，**一字不增不減**，不加文字、不加 footer。
 
-### 1b. 非空 `$ARGUMENTS`（具體問題 / 指令 / debug query）→ **FULL PATH**
+---
 
-**讀 `[autogo-json]` 區塊**內的 JSON（這是完整 FrameOutput per watcher，含結構化資料）。具體可查的欄位：
+### 1b. 非空 `$ARGUMENTS` → **先讀 `[autogo-meta]`，再路由**
 
-- `watchers[].window_id` / `app` / `title` / `last_run_age_s` / `pipeline_ms` / `panels` / `text_blocks` — 視窗 + pipeline metadata
-- `watchers[].output.panels[]` — 每個 panel 的 `panel_id` / `bbox: [x, y, w, h]` / `panel_type: title|content|sidebar|toolbar` / `parent_id`（panel 階層）
-- `watchers[].output.panels[].text_blocks[]` — 每個 OCR block 的 `bbox` / `text` / `confidence` / `font_size_est`
-- `watchers[].output.timings_ms` — `capture` / `list_windows` / `incremental` / `fuse` / `total`
-- `watchers[].output.cache_meta` — `hit` / `changed_regions` / `phash_distance` / `fresh_blocks` / `cached_blocks` / `cache_size` / `ttl_remaining_ms`
+`[autogo-meta]` 格式：
+```
+filter_applied: true|false
+filter_unmatched: []
+stub: true|false
+cache_hit_all: true|false
+```
 
-**在輸出 OCR 詳細內容前，先做 cache_meta 無變化判斷：**
+**路由決策表（依序檢查，第一個命中即 STOP）：**
 
-條件：watcher 的 `output.cache_meta.hit = true` 且 `phash_distance = 0`（或 `phash_distance` 欄位不存在）→ 該 watcher 標記為「無變化」。
+| 條件 | 回應 |
+|------|------|
+| `filter_unmatched` 非空陣列 | 開頭提醒「alias `X` 沒匹配到任何 watch 中的視窗」，**STOP** |
+| `filter_applied: false` 且 `$ARGUMENTS` 含 `-w` | 前置加 `⚠️ -w 過濾未套用（filter_aliases 空）` |
+| `stub: true` | 前置加 `⚠️ Stub backend：畫面內容為固定 stub 資料` |
+| `cache_hit_all: true` | 回覆「**畫面無變化（cached）**：N 個 watcher 均命中快取，若要刷新請按 Full pipeline 或等下一次 tick」，加標準 footer，**STOP** |
+| 問題是「有沒有変化」類（無需 OCR 詳細） | Grep persisted 檔的已知 key values；相同→「畫面無變化」**STOP**；不同→繼續 FULL |
 
-- **所有 watcher 均無變化** → 回覆下列內容後**停止**，不輸出任何 OCR 詳細內容：
+以上均未 STOP → 走 **FULL PATH**：讀 `[autogo-json]` 回答問題。
 
-  > **畫面無變化（cached）**：N 個 watcher 均命中快取（phash_distance=0），畫面內容與上次相同。若要強制刷新，請在 dashboard 按「Full pipeline」或等下一次 watcher tick。
+**FULL PATH 可查欄位：**
+- `watchers[].window_id/app/title/last_run_age_s/pipeline_ms/panels/text_blocks`
+- `watchers[].output.panels[].{panel_id, bbox[x,y,w,h], panel_type, text_blocks[]}`
+- `watchers[].output.panels[].text_blocks[].{bbox, text, confidence, font_size_est}`
+- `watchers[].output.timings_ms` / `cache_meta`
 
-  接著加標準 footer 後結束。
+**描述畫面時的規則：**
+- 按 panel **y 座標由上到下**排列（不照 JSON 陣列順序）；同 y 層按 x 由左到右
+- confidence < 0.92 的 text_block，文字後加 `⁽?⁾` 行內標記
+- JSON > 10KB（persisted 檔）且為通用描述查詢 → 先用 2KB preview，只有需要 bbox 精度時才 Read 完整
 
-- **部分 watcher 有變化** → 只對有變化（`hit=false` 或 `phash_distance > 0`）的 watcher 輸出完整 OCR 結果；無變化的 watcher 只附一行：`⬜ [app] title — 無變化（cached，phash_distance=0）`，不展開 text_blocks。
-
-**變化偵測快捷路徑（`cache_meta` 缺失時）：**
-
-若 `cache_meta` 欄位不存在（stub backend 常見），且問題是純粹的「有沒有変化」類查詢（不需要詳細 OCR 內容），使用快捷路徑而不是讀完整 JSON：
-
-1. 在對話 context 中記住上次觀測的「key display values」（例如計算機顯示的數字、主要顯示欄位內容）。
-2. 用 Grep tool 在 persisted 檔中搜尋這些關鍵值（例如 `grep "1024|1280"` 確認計算機數字）。
-3. 若 Grep 找到且值相同 → 回覆「畫面無變化」，**停止**，不讀完整 JSON。
-4. 若 Grep 找不到或值不同 → 改用完整讀取流程（Read persisted 檔 → parse calc.exe 段）。
-
-此快捷路徑節省 Read + parse 兩個 tool call（對 60–100KB 檔案效果明顯）。只適用於「有沒有変化」這類簡單比較，複雜 debug 查詢仍走完整 JSON 路徑。
-
-**filter 透明度：**
-
-回答前先確認 `filter_aliases` 欄位：
-- `filter_aliases: []`（空）→ 本次 `-w` 過濾**未生效**（hook 未傳 alias），回應中注記「⚠️ `-w <alias>` 過濾未套用，以下顯示的是所有 watcher 的結果」
-- `filter_unmatched` 非空 → 開頭提醒（見 Step 0）
-
-**Stub backend 偵測：**
-
-若任何 watcher 的 text_block 內容含 `seed=0`、`StubCapture` 或 `(mock OCR` → 在回應開頭加一行：
-> ⚠️ **Stub backend**：畫面內容為固定 stub 資料，不反映真實視窗狀態。
-
-**通用「畫面上有什麼」快捷路徑：**
-
-查詢意圖是「描述/摘要螢幕內容」（如「畫面上有什麼」「這個視窗顯示什麼」），且 JSON 大於 10KB（persisted 檔）時：先用 persisted 檔前 2KB preview 確認主要 panel 與 text block，只有需要 bbox 精度或完整 text 時才 Read 完整檔案。
-
-**空間排序原則：**
-
-描述畫面內容時按 panel 的 **y 座標由上到下**排列（不照 JSON 陣列順序），讓 user 看到的是自然的「頂部→中部→底部」空間布局。同一 y 層若有多個 panel，按 x 座標由左到右排列。
-
-**OCR 可疑 token 行內標記：**
-
-引用 OCR 文字時若同一 text_block 的 confidence < 0.92，在文字後加 `⁽?⁾` 提示。例：「`2.技術機⁽?⁾`」而不是等到 footer 才統一提醒。
-
-用這些**結構化資料**回答 user 問題（例如「Status [1] block 的 confidence 多少」「最大的 panel bbox 是哪個」「pipeline 慢在哪一步」）、繁中、開頭點 watcher 來源。Footer 加：
+回應開頭點 watcher 來源，footer 加：
 
 > _autogo context 來自 N 個 watcher（拉取時間 X 秒前）；若需更新請等下一次 watcher tick 或在 dashboard 重按一次 `🎯 Watch selected`。_
 
-N 從 JSON `watchers` 陣列長度；X 從 `watchers[0].last_run_age_s` 取（或從 `[autogo-response]` 區塊內 table 的 `Updated` 欄）。
+---
 
 ### 1c. 沒看到 hook 注入（連 `[autogo-response]` 都沒）→ **Bash fallback**
 
