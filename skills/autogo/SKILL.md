@@ -44,17 +44,20 @@ filter_applied: true|false
 filter_unmatched: []
 stub: true|false
 cache_hit_all: true|false
+text_blocks_total: N
+pipeline_slow: true|false
+pipeline_ms_max: N
 ```
 
 **路由決策表（依序靜默執行；不要把路由過程、tool call 前旁白、內部推理輸出給 user；第一個命中即 STOP）：**
 
 | 條件 | 回應 |
 |------|------|
-| `filter_unmatched` 非空陣列 | 開頭提醒「alias `X` 沒匹配到任何 watch 中的視窗」，**STOP** |
-| `filter_applied: false` 且 `$ARGUMENTS` 含 `-w` | **在最終回應開頭**加一次 `⚠️ -w 過濾未套用（filter_aliases 空）`（不在之後重複） |
+| `filter_unmatched` 非空陣列 | 開頭提醒「alias `X` 沒匹配到任何 watch 中的視窗，請去 /dash 確認」，**STOP** |
 | `stub: true` 且問題是通用描述（「畫面上有什麼」「這個視窗顯示什麼」） | 回覆「⚠️ Stub backend：固定 stub 資料，不反映真實視窗。若要看真實畫面請安裝 PaddleOCR 並設 `AUTOGO_DASH_BACKEND=windows`。」加標準 footer，**STOP** |
 | `stub: true`（非通用描述） | 前置加 `⚠️ Stub backend：畫面內容為固定 stub 資料` |
 | `cache_hit_all: true` | 回覆「**畫面無變化（cached）**：N 個 watcher 均命中快取，若要刷新請按 Full pipeline 或等下一次 tick」，加標準 footer，**STOP** |
+| `text_blocks_total > 20` 且問題是通用描述 | 直接用 `[autogo-response]` 的 Top OCR 欄位回覆結構摘要，**不讀 `[autogo-json]`**，加標準 footer，**STOP** |
 | 問題是「有沒有変化」類（無需 OCR 詳細） | 靜默 Grep persisted 檔的已知 key values；相同→「畫面無變化」**STOP**；不同→繼續 FULL |
 
 以上均未 STOP → 走 **FULL PATH**：讀 `[autogo-json]` 回答問題。
@@ -75,6 +78,9 @@ cache_hit_all: true|false
 回應開頭點 watcher 來源，footer 加：
 
 > _autogo context 來自 N 個 watcher（拉取時間 X 秒前）；若需更新請等下一次 watcher tick 或在 dashboard 重按一次 `🎯 Watch selected`。_
+
+若 `pipeline_slow: true`，在 footer 另起一行加：
+> _⚠️ OCR pipeline 耗時 Xs（`pipeline_ms_max`），快照可能比實際畫面落後該時間。_
 
 ---
 
