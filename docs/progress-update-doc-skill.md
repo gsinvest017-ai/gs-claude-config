@@ -14,7 +14,25 @@
 
 ## 進度日誌
 
-<!-- M1 以下追加 -->
+## M1 — Skill 檔案建立
+
+- `skills/update-doc/SKILL.md` 建立（框架偵測 → repo 掃描 → GS dark gold HTML 規則完整定義）
+- `commands/update-doc.md` 建立（slim slash command 入口）
+- commit: `7ec6112`
+
+## M2 — 掃描 gs-claude-config repo 內容
+
+- README.md 全文讀取（overview、chezmoi 安裝流程、目錄結構、day-to-day workflow）
+- 22 skills frontmatter 全部萃取（name + description）
+- 16 commands description 全部萃取
+- git log --oneline -20 取得（最近 20 commits）
+
+## M3 — 產出 docs/index.html
+
+- 產出 `docs/index.html`（GS dark gold theme，standalone，無外部 CDN）
+- 內容：Overview、Installation（chezmoi + install script 兩路徑）、Architecture（目錄樹 + symlink 表）、Skills grid（22 cards）、Commands 表（16 rows）、Changelog（20 commits）
+- Active nav highlight（IntersectionObserver JS）
+- commit: 本次
 
 ## Fallback 指引
 
