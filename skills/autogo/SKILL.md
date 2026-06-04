@@ -46,13 +46,14 @@ stub: true|false
 cache_hit_all: true|false
 ```
 
-**路由決策表（依序檢查，第一個命中即 STOP）：**
+**路由決策表（依序靜默執行，第一個命中即 STOP；不要把路由過程輸出給 user）：**
 
 | 條件 | 回應 |
 |------|------|
 | `filter_unmatched` 非空陣列 | 開頭提醒「alias `X` 沒匹配到任何 watch 中的視窗」，**STOP** |
 | `filter_applied: false` 且 `$ARGUMENTS` 含 `-w` | 前置加 `⚠️ -w 過濾未套用（filter_aliases 空）` |
-| `stub: true` | 前置加 `⚠️ Stub backend：畫面內容為固定 stub 資料` |
+| `stub: true` 且問題是通用描述（「畫面上有什麼」「這個視窗顯示什麼」） | 回覆「⚠️ Stub backend：固定 stub 資料，不反映真實視窗。若要看真實畫面請安裝 PaddleOCR 並設 `AUTOGO_DASH_BACKEND=windows`。」加標準 footer，**STOP** |
+| `stub: true`（非通用描述） | 前置加 `⚠️ Stub backend：畫面內容為固定 stub 資料` |
 | `cache_hit_all: true` | 回覆「**畫面無變化（cached）**：N 個 watcher 均命中快取，若要刷新請按 Full pipeline 或等下一次 tick」，加標準 footer，**STOP** |
 | 問題是「有沒有変化」類（無需 OCR 詳細） | Grep persisted 檔的已知 key values；相同→「畫面無變化」**STOP**；不同→繼續 FULL |
 
@@ -66,6 +67,7 @@ cache_hit_all: true|false
 
 **描述畫面時的規則：**
 - 按 panel **y 座標由上到下**排列（不照 JSON 陣列順序）；同 y 層按 x 由左到右
+- 使用 **bullet list 分段**，不要用 Markdown 表格（空 cell 視覺雜亂）
 - confidence < 0.92 的 text_block，文字後加 `⁽?⁾` 行內標記
 - JSON > 10KB（persisted 檔）且為通用描述查詢 → 先用 2KB preview，只有需要 bbox 精度時才 Read 完整
 
@@ -89,6 +91,7 @@ OCR 結果**會錯字、漏字、繁簡混雜**：
 ## 不要做的事
 
 - ❌ **不要** curl `/api/dash/frame` 或 `/api/dash/ocr` — 繞過 watcher pool 與 context cap。
+- ❌ **不要**把路由決策過程（「路由結果：...」）輸出給 user——meta 路由是靜默的內部判斷，user 只需要看最終回應。
 - ❌ **不要** 在 ECHO PATH 加任何文字（含開場白、解釋、footer、emoji 評論）— 整個回覆就是 sentinel 之間的內容，**一字不增不減**。
 - ❌ **不要** echo `[autogo-response]` / `[autogo-json]` / `[/autogo-json]` sentinel 本身、也不要 echo 整段 JSON 給 user（JSON 是給你 introspect 用的、user 自己會去 dashboard Copy JSON）。
 - ❌ **不要** 把 OCR 文字當 deterministic source of truth 下重大決策（請 user 在 `/inspect` 親眼確認）。
