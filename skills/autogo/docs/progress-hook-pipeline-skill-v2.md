@@ -7,8 +7,8 @@
 ## 計畫 milestone
 
 - [x] M1：autogo-prefetch.ps1 — 移除 cmd.exe pipe，改用 PowerShell 原生 pipe + @winArgs splatting
-- [ ] M2：SKILL.md — 四項行為改進
-- [ ] M3：進度檔更新 + commit
+- [x] M2：SKILL.md — 五項行為改進（filter 透明度、stub 偵測、空間排序、preview-first、OCR 行內標記）
+- [x] M3：進度檔更新 + commit
 
 ## 根因分析（M1）
 cmd.exe /c 指令：

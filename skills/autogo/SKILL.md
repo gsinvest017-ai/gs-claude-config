@@ -66,6 +66,29 @@ UserPromptSubmit hook 通常注入以下**三個區塊**在 turn 開頭：
 
 此快捷路徑節省 Read + parse 兩個 tool call（對 60–100KB 檔案效果明顯）。只適用於「有沒有変化」這類簡單比較，複雜 debug 查詢仍走完整 JSON 路徑。
 
+**filter 透明度：**
+
+回答前先確認 `filter_aliases` 欄位：
+- `filter_aliases: []`（空）→ 本次 `-w` 過濾**未生效**（hook 未傳 alias），回應中注記「⚠️ `-w <alias>` 過濾未套用，以下顯示的是所有 watcher 的結果」
+- `filter_unmatched` 非空 → 開頭提醒（見 Step 0）
+
+**Stub backend 偵測：**
+
+若任何 watcher 的 text_block 內容含 `seed=0`、`StubCapture` 或 `(mock OCR` → 在回應開頭加一行：
+> ⚠️ **Stub backend**：畫面內容為固定 stub 資料，不反映真實視窗狀態。
+
+**通用「畫面上有什麼」快捷路徑：**
+
+查詢意圖是「描述/摘要螢幕內容」（如「畫面上有什麼」「這個視窗顯示什麼」），且 JSON 大於 10KB（persisted 檔）時：先用 persisted 檔前 2KB preview 確認主要 panel 與 text block，只有需要 bbox 精度或完整 text 時才 Read 完整檔案。
+
+**空間排序原則：**
+
+描述畫面內容時按 panel 的 **y 座標由上到下**排列（不照 JSON 陣列順序），讓 user 看到的是自然的「頂部→中部→底部」空間布局。同一 y 層若有多個 panel，按 x 座標由左到右排列。
+
+**OCR 可疑 token 行內標記：**
+
+引用 OCR 文字時若同一 text_block 的 confidence < 0.92，在文字後加 `⁽?⁾` 提示。例：「`2.技術機⁽?⁾`」而不是等到 footer 才統一提醒。
+
 用這些**結構化資料**回答 user 問題（例如「Status [1] block 的 confidence 多少」「最大的 panel bbox 是哪個」「pipeline 慢在哪一步」）、繁中、開頭點 watcher 來源。Footer 加：
 
 > _autogo context 來自 N 個 watcher（拉取時間 X 秒前）；若需更新請等下一次 watcher tick 或在 dashboard 重按一次 `🎯 Watch selected`。_
