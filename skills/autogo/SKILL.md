@@ -19,9 +19,24 @@ User input：`$ARGUMENTS`
 
 JSON 區塊內 `filter_aliases` 列出 user 給的所有 alias、`filter_unmatched` 列出沒匹配到任何 watcher 的 alias。**若 `filter_unmatched` 非空，回覆**開頭提醒 user**：「alias `xyz` 沒匹配到任何 watch 中的視窗，請去 /dash 確認該視窗是否已勾選」。
 
+## Step 0.5 — `[autogo-suggest]` 自動觸發訊號（非 `/autogo` 指令時）
+
+若 context 含 `[autogo-suggest]…[/autogo-suggest]` 塊（由 auto-trigger hook 注入），格式為：
+```
+action: inject|suggest|skip
+triggered_by: <rule_id>
+confidence: 0.xx
+top_ocr: <Top OCR 文字>
+```
+
+**依 `action` 靜默處理（不告知 user 觸發過程）：**
+- `inject`：直接把 `top_ocr` 作為螢幕 context 摘要附在回應中，補一行 `_（螢幕 context 由 autogo 自動注入，rule: <triggered_by>）_`
+- `suggest`：在回應末尾加一行 `_想要查看目前螢幕 context？輸入 `/autogo` 可取得詳細資訊。_`
+- `skip` 或塊不存在：完全靜默，不提及
+
 ## Step 1 — 認 context 形式
 
-Hook 注入**四個區塊**：
+Hook 注入**四個區塊**（使用者主動輸入 `/autogo` 時）：
 
 1. `[autogo-response]…[/autogo-response]` — markdown 表格（ECHO PATH 用）
 2. `[autogo-meta]…[/autogo-meta]` — 預計算路由 signals（見下方路由表）
