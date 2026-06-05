@@ -51,8 +51,23 @@ if ($wm.Success) {
     }
 }
 
-$py = 'C:\Users\User\autogo\.venv\Scripts\python.exe'
-if (-not (Test-Path $py)) {
+# ── Auto-detect autogo Python (.venv) ─────────────────────────────────────────
+# Priority: 1) ~/.claude/autogo-path.txt (written by claude/install.ps1)
+#           2) common fallback paths ($HOME\autogo, C:\autogo)
+$py = $null
+$pathFile = Join-Path $env:USERPROFILE ".claude\autogo-path.txt"
+if (Test-Path $pathFile) {
+    $autogoRoot = (Get-Content $pathFile -Raw -Encoding UTF8).Trim()
+    $candidate  = Join-Path $autogoRoot ".venv\Scripts\python.exe"
+    if (Test-Path $candidate) { $py = $candidate }
+}
+if (-not $py) {
+    foreach ($r in @((Join-Path $env:USERPROFILE "autogo"), "C:\autogo")) {
+        $c = Join-Path $r ".venv\Scripts\python.exe"
+        if (Test-Path $c) { $py = $c; break }
+    }
+}
+if (-not $py) {
     Write-Output '[autogo-hook] python venv not found; skill will Bash fallback.'
     exit 0
 }
@@ -60,7 +75,7 @@ if (-not (Test-Path $py)) {
 # Run pipeline: context_cli --format=full [@winArgs] → context_summary --input=full
 # @winArgs splatting passes --window args as separate arguments (no quoting needed).
 # Out-String collapses the PS output stream into a single UTF-8 string for piping.
-$ctxOutput = (& $py -m autogo_dash.context_cli --format=full @winArgs 2>$null | Out-String)
+$ctxOutput  = (& $py -m autogo_dash.context_cli --format=full @winArgs 2>$null | Out-String)
 $hookOutput = ($ctxOutput | & $py -m autogo_dash.context_summary --input=full | Out-String)
 
 # --- Top OCR diff: compare current table row's Top OCR with cached value ---
@@ -69,7 +84,6 @@ $hookOutput = ($ctxOutput | & $py -m autogo_dash.context_summary --input=full | 
 $currentTopOcr = ""
 foreach ($line in ($hookOutput -split "`n")) {
     if ($line -match '^\|\s*\d+\s*\|') {
-        # Last non-empty cell before trailing |
         if ($line -match '\|\s*([^|]+?)\s*\|\s*$') {
             $currentTopOcr = $matches[1].Trim()
         }
@@ -88,7 +102,7 @@ if ($currentTopOcr -ne "") {
 }
 
 # Inject top_ocr_unchanged signal into [autogo-meta] block before output
-$signal = "top_ocr_unchanged: " + ($topOcrUnchanged ? "true" : "false")
+$signal     = "top_ocr_unchanged: " + ($topOcrUnchanged ? "true" : "false")
 $hookOutput = $hookOutput -replace '\[/autogo-meta\]', "$signal`n[/autogo-meta]"
 
 Write-Output $hookOutput

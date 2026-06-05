@@ -33,30 +33,42 @@ $policy = $null
 try { $policy = Get-Content $policyFile -Raw | ConvertFrom-Json } catch { exit 0 }
 if (-not $policy) { exit 0 }
 
-# ── 3. 取得目前 watcher 狀態（輕量，不帶 --format=full）──────────────────────
-$py = 'C:\Users\User\autogo\.venv\Scripts\python.exe'
-if (-not (Test-Path $py)) { exit 0 }
+# ── 3. Auto-detect autogo Python (.venv) ─────────────────────────────────────
+# Priority: 1) ~/.claude/autogo-path.txt (written by claude/install.ps1)
+#           2) common fallback paths ($HOME\autogo, C:\autogo)
+$py = $null
+$pathFile = Join-Path $env:USERPROFILE ".claude\autogo-path.txt"
+if (Test-Path $pathFile) {
+    $autogoRoot = (Get-Content $pathFile -Raw -Encoding UTF8).Trim()
+    $candidate  = Join-Path $autogoRoot ".venv\Scripts\python.exe"
+    if (Test-Path $candidate) { $py = $candidate }
+}
+if (-not $py) {
+    foreach ($r in @((Join-Path $env:USERPROFILE "autogo"), "C:\autogo")) {
+        $c = Join-Path $r ".venv\Scripts\python.exe"
+        if (Test-Path $c) { $py = $c; break }
+    }
+}
+if (-not $py) { exit 0 }   # Python not found → silent skip
 
-$contextJson = $null
+# ── 4. 取得目前 watcher 狀態 ─────────────────────────────────────────────────
 try {
-    $ctxRaw = & $py -m autogo_dash.context_cli --format=full 2>$null | Out-String
-    # 快速取出 text_blocks_total（簡單 regex，不 parse 完整 JSON）
-    $tbMatch = [regex]::Match($ctxRaw, '"text_blocks"\s*:\s*(\d+)')
+    $ctxRaw   = & $py -m autogo_dash.context_cli --format=full 2>$null | Out-String
     $hasWatcher = $ctxRaw -match '"window_id"'
-    $topOcrRaw = ""
-    $tocrMatch = [regex]::Match($ctxRaw, '\|\s*\d+\s*\|[^|]+\|[^|]+\|[^|]+\|\s*([^|]+)\|')
+    $topOcrRaw  = ""
+    $tocrMatch  = [regex]::Match($ctxRaw, '\|\s*\d+\s*\|[^|]+\|[^|]+\|[^|]+\|\s*([^|]+)\|')
     if ($tocrMatch.Success) { $topOcrRaw = $tocrMatch.Groups[1].Value.Trim() }
 } catch { exit 0 }
 
-if (-not $hasWatcher) { exit 0 }  # 無 watcher，無需觸發
+if (-not $hasWatcher) { exit 0 }   # 無 watcher，無需觸發
 
-# ── 4. 評估規則 ───────────────────────────────────────────────────────────────
+# ── 5. 評估規則 ───────────────────────────────────────────────────────────────
 $promptLower = $prompt.ToLower()
 $topOcrLower = $topOcrRaw.ToLower()
 
-$bestAction = $policy.default_action
-$bestPriority = -1
-$bestRuleId = ""
+$bestAction    = $policy.default_action
+$bestPriority  = -1
+$bestRuleId    = ""
 $bestConfidence = 0.0
 
 foreach ($rule in ($policy.rules | Where-Object { $_.enabled })) {
@@ -66,9 +78,7 @@ foreach ($rule in ($policy.rules | Where-Object { $_.enabled })) {
         if ($keyAny) {
             $matched = $keyAny | Where-Object { $promptLower -match [regex]::Escape($_) }
             if ($matched) {
-                $bestAction = "skip"
-                $bestRuleId = $rule.id
-                break
+                $bestAction = "skip"; $bestRuleId = $rule.id; break
             }
         }
         continue
@@ -98,9 +108,9 @@ foreach ($rule in ($policy.rules | Where-Object { $_.enabled })) {
     }
 
     if ($rule.priority -gt $bestPriority) {
-        $bestPriority = $rule.priority
-        $bestAction = $rule.action
-        $bestRuleId = $rule.id
+        $bestPriority   = $rule.priority
+        $bestAction     = $rule.action
+        $bestRuleId     = $rule.id
         $bestConfidence = $rule.confidence
     }
 }
@@ -108,12 +118,12 @@ foreach ($rule in ($policy.rules | Where-Object { $_.enabled })) {
 # skip → 靜默退出
 if ($bestAction -eq "skip" -or $bestAction -eq "") { exit 0 }
 
-# ── 5. 拉輕量 context（Top OCR 用於摘要）────────────────────────────────────
+# ── 6. 拉輕量 context（Top OCR 用於摘要）────────────────────────────────────
 $ctxArgs = @("--format=full")
 if ($policy.context_cli_args) {
     foreach ($a in $policy.context_cli_args) { $ctxArgs += $a }
 }
-$ctxOutput = (& $py -m autogo_dash.context_cli @ctxArgs 2>$null | Out-String)
+$ctxOutput  = (& $py -m autogo_dash.context_cli @ctxArgs 2>$null | Out-String)
 $ctxSummary = ($ctxOutput | & $py -m autogo_dash.context_summary --input=full | Out-String)
 
 # 取 Top OCR from [autogo-response] table
@@ -125,7 +135,7 @@ foreach ($line in ($ctxSummary -split "`n")) {
     }
 }
 
-# ── 6. 輸出 [autogo-suggest] 塊 ──────────────────────────────────────────────
+# ── 7. 輸出 [autogo-suggest] 塊 ──────────────────────────────────────────────
 $confFmt = [math]::Round($bestConfidence, 2)
 Write-Output "[autogo-suggest]"
 Write-Output "action: $bestAction"
