@@ -21,6 +21,15 @@ if (-not $OutputPath) {
     $OutputPath = Join-Path $dir "${base}_compressed${ext}"
 }
 
+# 源檔已在目標大小以下 → 不需壓縮
+$origSize = (Get-Item $InputPath).Length
+$origMB   = [math]::Round($origSize / 1MB, 2)
+if ($origSize -le $TargetMB * 1024 * 1024) {
+    Write-Host "  原始 ${origMB} MB 已低於目標 ${TargetMB} MB，不需壓縮。"
+    exit 0
+}
+Write-Host "  原始     : ${origMB} MB（目標 ${TargetMB} MB）"
+
 # 確認 ffmpeg / ffprobe 可用
 foreach ($cmd in @('ffmpeg','ffprobe')) {
     if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
@@ -44,10 +53,10 @@ if ($durationStr -and $durationStr.Trim() -match '^\d') {
 }
 Write-Host "  時長     : $([math]::Round($durationSec, 1)) 秒"
 
-# 計算目標 video bitrate
-# target_bits = TargetMB * 1024 * 1024 * 8
+# 計算目標 video bitrate（留 2% buffer 防容器 overhead 超標）
+# target_bits = TargetMB * 0.98 * 1024 * 1024 * 8
 # video_kbps  = (target_bits / duration_sec / 1000) - AudioKbps
-$targetBits = $TargetMB * 1024 * 1024 * 8
+$targetBits = $TargetMB * 0.98 * 1024 * 1024 * 8
 $totalKbps  = $targetBits / $durationSec / 1000
 $videoKbps  = [int]($totalKbps - $AudioKbps)
 
@@ -74,7 +83,7 @@ try {
 }
 
 # 回報
-$origMB = [math]::Round((Get-Item $InputPath).Length / 1MB, 2)
+$origMB = [math]::Round($origSize / 1MB, 2)
 $outMB  = [math]::Round((Get-Item $OutputPath).Length / 1MB, 2)
 Write-Host ""
 Write-Host "  原始     : ${origMB} MB"
