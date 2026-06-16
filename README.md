@@ -272,6 +272,21 @@ scripts/install-cron.sh
 
 `targets.conf` is `.gitignore`d on purpose — each machine keeps its own list.
 
+## autopilot — 互動 session 內硬性不停
+
+Night Shift 是 **headless 跨-session** 的無人迴圈；`/autopilot` 是它在**互動 session 內**的對應物：靠 `hooks/autopilot-continue.{ps1,sh}` 這支 **Stop hook**，每次 Claude 想結束回合時把它擋回去繼續做，連 yes/no 都不必按，直到任務完成或達續跑上限（預設 50）。
+
+```
+/autopilot on <任務>     # 啟用 + 立即開始，沿用 safe-yolo 的 milestone/commit/進度紀律
+/autopilot status        # 看目前第幾次 / 上限 / 任務
+/autopilot off           # 隨時中止
+```
+
+- skill 定義：`skills/autopilot/SKILL.md`；hook 與安全閥說明：`hooks/README.md`。
+- 預設**關閉**（無旗標檔時 hook 一律放行），且旗標**綁定 session**，不會影響其他視窗。
+- `settings.json` 已把 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` 提到 `60` 以容納 50 次續跑（繞過 Claude Code 內建 8 次硬煞車）。
+- autonomy 三件套：`safe-yolo`（軟 prompt）→ `autopilot`（硬 hook，本機互動）→ `night-shift`（headless 跨-session）。
+
 ## Adding a new slash command or skill
 
 1. Drop it under `commands/<name>.md` or `skills/<name>/SKILL.md` in this repo

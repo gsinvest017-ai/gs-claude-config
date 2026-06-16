@@ -50,11 +50,22 @@ link "$REPO_DIR/commands"  "$CLAUDE_DIR/commands"
 link "$REPO_DIR/skills"    "$CLAUDE_DIR/skills"
 link "$REPO_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 
+# hooks/ is a real (non-symlinked) dir per machine — it mixes machine-specific
+# scripts. Copy the portable autopilot hook by file so local hooks survive.
+echo "==> Copying autopilot hook into $CLAUDE_DIR/hooks/"
+mkdir -p "$CLAUDE_DIR/hooks"
+cp -f "$REPO_DIR/hooks/autopilot-continue.sh" "$CLAUDE_DIR/hooks/autopilot-continue.sh"
+chmod +x "$CLAUDE_DIR/hooks/autopilot-continue.sh"
+echo "  copied autopilot-continue.sh"
+
 echo "==> settings.json"
+AUTOPILOT_CMD="$CLAUDE_DIR/hooks/autopilot-continue.sh"
 if [[ -e "$CLAUDE_DIR/settings.json" ]]; then
     echo "  exists already — left untouched. Diff against settings.template.json manually if you want to merge new keys."
+    echo "  (autopilot Stop hook + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)"
 else
-    sed "s|__HOME__|$HOME|g" "$REPO_DIR/settings.template.json" > "$CLAUDE_DIR/settings.json"
+    sed -e "s|__HOME__|$HOME|g" -e "s|__AUTOPILOT_HOOK_CMD__|$AUTOPILOT_CMD|g" \
+        "$REPO_DIR/settings.template.json" > "$CLAUDE_DIR/settings.json"
     echo "  rendered settings.template.json → $CLAUDE_DIR/settings.json"
 fi
 

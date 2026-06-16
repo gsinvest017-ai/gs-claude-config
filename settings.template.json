@@ -11,6 +11,23 @@
   "model": "opus",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
+  "env": {
+    "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__AUTOPILOT_HOOK_CMD__",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true
   }

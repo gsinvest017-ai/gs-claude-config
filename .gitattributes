@@ -1,0 +1,4 @@
+# Shell scripts must stay LF on every platform — they run under bash (WSL /
+# Linux); CRLF line endings break the shebang and `set` parsing. Without this,
+# core.autocrlf=true on a Windows clone can hand out CRLF copies.
+*.sh text eol=lf

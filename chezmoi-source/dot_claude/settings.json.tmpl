@@ -11,6 +11,27 @@
   "model": "opus",
   "skipDangerousModePermissionPrompt": true,
   "enableAllProjectMcpServers": true,
+  "env": {
+    "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+{{- if eq .chezmoi.os "windows" }}
+            "command": {{ printf "pwsh -NoProfile -NonInteractive -File \"%s/.claude/hooks/autopilot-continue.ps1\"" (replace "\\" "/" .chezmoi.homeDir) | toJson }},
+{{- else }}
+            "command": {{ printf "%s/.claude/hooks/autopilot-continue.sh" .chezmoi.homeDir | toJson }},
+{{- end }}
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {{ .claude.defaultPlugins | toJson }},
   "permissions": {
     "allow": {{ .claude.defaultAllowPatterns | toJson }},
