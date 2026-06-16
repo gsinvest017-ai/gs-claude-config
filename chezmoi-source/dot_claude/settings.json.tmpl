@@ -15,6 +15,22 @@
     "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "^/autopilot",
+        "hooks": [
+          {
+            "type": "command",
+{{- if eq .chezmoi.os "windows" }}
+            "command": {{ printf "pwsh -NoProfile -NonInteractive -File \"%s/.claude/hooks/autopilot-arm.ps1\"" (replace "\\" "/" .chezmoi.homeDir) | toJson }},
+{{- else }}
+            "command": {{ printf "%s/.claude/hooks/autopilot-arm.sh" .chezmoi.homeDir | toJson }},
+{{- end }}
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",

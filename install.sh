@@ -52,19 +52,23 @@ link "$REPO_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 
 # hooks/ is a real (non-symlinked) dir per machine — it mixes machine-specific
 # scripts. Copy the portable autopilot hook by file so local hooks survive.
-echo "==> Copying autopilot hook into $CLAUDE_DIR/hooks/"
+echo "==> Copying autopilot hooks into $CLAUDE_DIR/hooks/"
 mkdir -p "$CLAUDE_DIR/hooks"
 cp -f "$REPO_DIR/hooks/autopilot-continue.sh" "$CLAUDE_DIR/hooks/autopilot-continue.sh"
-chmod +x "$CLAUDE_DIR/hooks/autopilot-continue.sh"
-echo "  copied autopilot-continue.sh"
+cp -f "$REPO_DIR/hooks/autopilot-arm.sh"      "$CLAUDE_DIR/hooks/autopilot-arm.sh"
+chmod +x "$CLAUDE_DIR/hooks/autopilot-continue.sh" "$CLAUDE_DIR/hooks/autopilot-arm.sh"
+echo "  copied autopilot-continue.sh, autopilot-arm.sh"
 
 echo "==> settings.json"
 AUTOPILOT_CMD="$CLAUDE_DIR/hooks/autopilot-continue.sh"
+AUTOPILOT_ARM="$CLAUDE_DIR/hooks/autopilot-arm.sh"
 if [[ -e "$CLAUDE_DIR/settings.json" ]]; then
     echo "  exists already — left untouched. Diff against settings.template.json manually if you want to merge new keys."
-    echo "  (autopilot Stop hook + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)"
+    echo "  (autopilot Stop + UserPromptSubmit hooks + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)"
 else
-    sed -e "s|__HOME__|$HOME|g" -e "s|__AUTOPILOT_HOOK_CMD__|$AUTOPILOT_CMD|g" \
+    sed -e "s|__HOME__|$HOME|g" \
+        -e "s|__AUTOPILOT_HOOK_CMD__|$AUTOPILOT_CMD|g" \
+        -e "s|__AUTOPILOT_ARM_CMD__|$AUTOPILOT_ARM|g" \
         "$REPO_DIR/settings.template.json" > "$CLAUDE_DIR/settings.json"
     echo "  rendered settings.template.json → $CLAUDE_DIR/settings.json"
 fi

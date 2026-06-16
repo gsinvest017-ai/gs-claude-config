@@ -11,40 +11,26 @@ description: 硬性不停執行模式（hook 強制）。當使用者輸入 /aut
 - `state.json` — `{ session_id, iterations, max_iterations, started, task }`
 - `done` — 完成 sentinel；**任務真的完成且驗證通過後才 touch**，hook 看到它就放行並清狀態。
 
+> **旗標由 hook 建立，不要自己寫 `state.json`。** `/autopilot on`、`/autopilot off` 在你（模型）看到 prompt 之前，已先被 UserPromptSubmit hook（`autopilot-arm.{ps1,sh}`）攔截處理：`on` 會用**正確的 session_id** 建好旗標、`off` 會刪掉它。你只負責「執行任務」與「收尾」。若你自己再寫一次 `state.json` 會覆蓋掉 hook 綁好的 session_id，重新引入跨 session race。
+
 ## 子指令
 
 ### `/autopilot on <任務描述>`
-1. 建立狀態目錄與旗標檔，`session_id` 先留空字串（hook 第一次觸發時會自動綁定當前 session）：
-
-   **PowerShell（Windows）**
-   ```powershell
-   $d = "$env:USERPROFILE\.claude\.autopilot"
-   New-Item -ItemType Directory -Force -Path $d | Out-Null
-   Remove-Item "$d\done" -Force -ErrorAction SilentlyContinue
-   @{ session_id=""; iterations=0; max_iterations=50; started=(Get-Date -Format o); task="<任務描述>" } |
-     ConvertTo-Json -Compress | Set-Content "$d\state.json" -Encoding UTF8
-   ```
-
-   **Bash（WSL / Linux）**
-   ```bash
-   d="$HOME/.claude/.autopilot"; mkdir -p "$d"; rm -f "$d/done"
-   printf '{"session_id":"","iterations":0,"max_iterations":50,"started":"%s","task":"%s"}' \
-     "$(date -Iseconds)" "<任務描述>" > "$d/state.json"
-   ```
-2. 接著**立即開始執行任務**，全程套用下方「執行守則」。從這一刻起，每次你想結束回合都會被 hook 擋回來，所以**就當作不會停**，一路把任務推到完成。
-3. 完成且測試/驗證通過後，**touch done sentinel** 再結束（見「如何收尾」）。
+旗標已由 arm hook 建好並綁定當前 session（你會在 context 收到「autopilot 已武裝」的提示）。你要做的只有兩件事：
+1. **立即開始執行任務**，全程套用下方「執行守則」。從這一刻起，每次你想結束回合都會被 Stop hook 擋回來，所以**就當作不會停**，一路把任務推到完成。
+2. 完成且測試/驗證通過後，**touch done sentinel** 再結束（見「如何收尾」）。
 
 ### `/autopilot off`
-立刻中止：刪掉旗標檔。下一次回合結束就會正常停。
-```powershell
-Remove-Item "$env:USERPROFILE\.claude\.autopilot\state.json" -Force -ErrorAction SilentlyContinue   # Windows
-```
-```bash
-rm -f "$HOME/.claude/.autopilot/state.json"   # WSL / Linux
-```
+arm hook 已把旗標刪掉，autopilot 已停用。你只需回一句確認即可（下一次回合結束就會正常停）。
 
 ### `/autopilot status`
-印出旗標檔內容（目前第幾次 / 上限 / 任務），或回報「目前未啟用」。
+讀出旗標檔內容（目前第幾次 / 上限 / 任務），或回報「目前未啟用」：
+```powershell
+Get-Content "$env:USERPROFILE\.claude\.autopilot\state.json" -Raw -EA SilentlyContinue   # Windows
+```
+```bash
+cat "$HOME/.claude/.autopilot/state.json" 2>/dev/null || echo "未啟用"   # WSL / Linux
+```
 
 ## 執行守則（沿用 /safe-yolo）
 

@@ -33,15 +33,11 @@ session_id="$(printf '%s' "$stdin" | jq -r '.session_id // ""')"
 state="$(cat "$STATE_PATH" 2>/dev/null)" || exit 0
 [[ -n "$state" ]] || exit 0
 
-# First-touch session binding (skill writes session_id:"").
+# Valve 3: the flag must belong to THIS session. The arm hook
+# (autopilot-arm.sh, UserPromptSubmit) stamps the real session_id at
+# `/autopilot on` time, so a stale or foreign flag never blocks the wrong
+# session. An empty id (shouldn't happen anymore) also falls here -> stop.
 state_sid="$(printf '%s' "$state" | jq -r '.session_id // ""')"
-if [[ -z "$state_sid" ]]; then
-    state="$(printf '%s' "$state" | jq --arg s "$session_id" '.session_id=$s')"
-    printf '%s' "$state" > "$STATE_PATH"
-    state_sid="$session_id"
-fi
-
-# Valve 3: flag belongs to a different session.
 [[ "$state_sid" == "$session_id" ]] || exit 0
 
 # Valve 4: completion sentinel.

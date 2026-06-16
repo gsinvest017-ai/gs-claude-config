@@ -15,6 +15,18 @@
     "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "^/autopilot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__AUTOPILOT_ARM_CMD__",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",

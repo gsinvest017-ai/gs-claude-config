@@ -53,14 +53,10 @@ if (-not (Test-Path $statePath)) { exit 0 }
 $state = Get-Content -LiteralPath $statePath -Raw | ConvertFrom-Json
 if (-not $state) { exit 0 }
 
-# First-touch session binding: the skill writes session_id:"" because it
-# cannot read the session id itself; the hook locks it in on first sight.
-if ([string]::IsNullOrEmpty([string]$state.session_id)) {
-    $state.session_id = $sessionId
-    ($state | ConvertTo-Json -Compress) | Set-Content -LiteralPath $statePath -Encoding UTF8
-}
-
-# Valve 3: flag belongs to a different session -> do not block this one.
+# Valve 3: the flag must belong to THIS session. The arm hook
+# (autopilot-arm.ps1, UserPromptSubmit) stamps the real session_id at
+# `/autopilot on` time, so a stale or foreign flag never blocks the wrong
+# session. An empty id (shouldn't happen anymore) also falls here -> stop.
 if ([string]$state.session_id -ne $sessionId) { exit 0 }
 
 # Valve 4: completion sentinel -> finish and clean up.

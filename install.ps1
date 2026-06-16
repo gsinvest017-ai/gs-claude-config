@@ -86,27 +86,32 @@ New-RepoSymlink -Source (Join-Path $RepoDir 'CLAUDE.md') -Dest (Join-Path $Claud
 # hooks/ is a real (non-symlinked) dir on each machine because it mixes
 # machine-specific scripts. Copy the portable autopilot hook in by file so we
 # never clobber local hooks. Idempotent — overwrites the previous copy.
-Write-Host '==> Copying autopilot hook into ~/.claude/hooks/'
+Write-Host '==> Copying autopilot hooks into ~/.claude/hooks/'
 $HooksDir = Join-Path $ClaudeDir 'hooks'
 if (-not (Test-Path $HooksDir)) { New-Item -ItemType Directory -Path $HooksDir | Out-Null }
 Copy-Item (Join-Path $RepoDir 'hooks\autopilot-continue.ps1') (Join-Path $HooksDir 'autopilot-continue.ps1') -Force
-Write-Host '  copied autopilot-continue.ps1'
+Copy-Item (Join-Path $RepoDir 'hooks\autopilot-arm.ps1')      (Join-Path $HooksDir 'autopilot-arm.ps1') -Force
+Write-Host '  copied autopilot-continue.ps1, autopilot-arm.ps1'
 
 Write-Host '==> settings.json'
 $SettingsTarget = Join-Path $ClaudeDir 'settings.json'
-# OS-correct Stop-hook command substituted into the template's placeholder.
+# OS-correct hook commands substituted into the template's placeholders.
 # JSON-escape backslashes then double-quotes so the path-with-quotes survives
 # as a valid JSON string value. Use literal String.Replace (not -replace) so
 # the backslashes/quotes in the replacement are not treated as regex.
-$AutopilotCmd = 'pwsh -NoProfile -NonInteractive -File "' + (Join-Path $HooksDir 'autopilot-continue.ps1') + '"'
-$AutopilotCmdJson = $AutopilotCmd.Replace('\', '\\').Replace('"', '\"')
+function ConvertTo-JsonCmd([string]$p) {
+    ('pwsh -NoProfile -NonInteractive -File "' + $p + '"').Replace('\', '\\').Replace('"', '\"')
+}
+$AutopilotCmdJson = ConvertTo-JsonCmd (Join-Path $HooksDir 'autopilot-continue.ps1')
+$AutopilotArmJson = ConvertTo-JsonCmd (Join-Path $HooksDir 'autopilot-arm.ps1')
 if (Test-Path $SettingsTarget) {
     Write-Host '  exists already - left untouched. Diff against settings.template.json manually if you want to merge new keys.'
-    Write-Host '  (autopilot Stop hook + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)'
+    Write-Host '  (autopilot Stop + UserPromptSubmit hooks + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)'
 } else {
     $template = Get-Content (Join-Path $RepoDir 'settings.template.json') -Raw
     $rendered = $template -replace '__HOME__', $env:USERPROFILE.Replace('\', '/')
     $rendered = $rendered.Replace('__AUTOPILOT_HOOK_CMD__', $AutopilotCmdJson)
+    $rendered = $rendered.Replace('__AUTOPILOT_ARM_CMD__', $AutopilotArmJson)
     Set-Content -Path $SettingsTarget -Value $rendered -Encoding UTF8 -NoNewline
     Write-Host "  rendered settings.template.json -> $SettingsTarget"
 }
