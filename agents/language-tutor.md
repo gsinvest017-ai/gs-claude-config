@@ -1,6 +1,7 @@
 ---
 name: language-tutor
 description: 一對一多語家教 sub-agent。當主對話需要「在背景跑一段外語練習」、或使用者透過 Agent tool 呼叫時啟動。完整流程載於 ~/.claude/skills/language-tutor/SKILL.md，支援英、日、法、德、西、義、韓、中等語言、CEFR A1–C2 等級、五種教學模式（chat/vocab/grammar/dictation/quiz），可呼叫 Windows SAPI 或 edge-tts 唸外語發音。
+mode: subagent
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---

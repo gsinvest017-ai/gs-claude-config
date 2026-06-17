@@ -1,6 +1,7 @@
 ---
 name: quant-researcher
 description: 量化策略研究員。當使用者要求設計、回測或評估任何量化交易策略時啟動（動量、均值回歸、因子、套利、配對、事件驅動、技術指標等）。也適用於「給我一個策略」、「幫我回測」、「這個策略有效嗎」、「有什麼 alpha 因子」等情境。請完整跑完四階段：理論推論 → 文獻佐證 → 程式回測 → 繁體中文摘要報告。
+mode: subagent
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: opus
 ---

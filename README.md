@@ -106,6 +106,20 @@ scripts/clone-all.sh                   # idempotent; DRY_RUN=1 to preview
 `repos.txt` is gitignored — each machine keeps its own list. The script
 skips repos that already exist locally and prints a summary at the end.
 
+**Prerequisite — SSH key on GitHub.** `repos.txt` typically holds
+`git@github.com:…` URLs (needed for private repos), so a fresh machine
+without an SSH key will see every clone fail with `Permission denied
+(publickey)`. Set it up once:
+
+```bash
+ssh-keygen -t ed25519 -C "<your-email>" -f ~/.ssh/id_ed25519 -N ""
+cat ~/.ssh/id_ed25519.pub        # paste into https://github.com/settings/keys
+ssh -T git@github.com            # verify — should greet you by username
+```
+
+If you only need public repos, you can sidestep SSH by rewriting URLs to
+HTTPS: `git config --global url."https://github.com/".insteadOf git@github.com:`.
+
 ### Things chezmoi deliberately won't migrate
 
 | Item | Why | What to do on the new machine |

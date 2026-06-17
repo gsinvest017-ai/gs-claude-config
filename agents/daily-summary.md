@@ -1,6 +1,7 @@
 ---
 name: daily-summary
 description: 每日 repo 變更彙整員。當使用者輸入 /daily-summary 或要求「彙整今天的 commits」、「生成日報」、「整理今日 repo 變更」時啟動。抓出當前 repo 路徑下當天的所有 git commits、檔案變更與必要的 diff 摘要，產出一份繁體中文 Markdown 報告 `YYYY-MM-DD-summary.md`，內容包含：commit 列表、變更分類（feature / fix / refactor / docs / chore）、影響檔案統計、風險與後續建議。
+mode: subagent
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
