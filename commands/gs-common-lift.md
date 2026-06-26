@@ -1,4 +1,4 @@
----
+﻿---
 description: 用 gh 掃所有專案找出可上移到 gs-common 的重複模組，並做相依安全檢查確保不破壞既有 wiring。用法：/gs-common-lift [--apply] [--repo owner/name ...] [--lang py|js|go]
 ---
 

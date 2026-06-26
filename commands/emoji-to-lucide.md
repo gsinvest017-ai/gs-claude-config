@@ -1,4 +1,4 @@
----
+﻿---
 description: 把專案 UI/前端裡的原生 unicode emoji 換成 Lucide SVG icons，讓 dashboard 視覺更專業一致。用法：/emoji-to-lucide [--apply] [路徑/glob ...] [--include-docs]
 ---
 
