@@ -172,6 +172,23 @@ cd ~/gs-claude-config && git pull
 # nothing else needed — symlinks already point here
 ```
 
+### Health check — `scripts/doctor.py`
+
+Before switching machines (or any time skills seem to be missing on another
+host), run the doctor to catch the sync gaps that bit the 2026-07-01 Mac Studio
+migration — skills stuck on a feature branch, unpushed commits, uncommitted new
+skills, skills absent from `origin/<default>`, and broken sibling-repo symlinks:
+
+```bash
+python scripts/doctor.py            # full report (git fetch first)
+python scripts/doctor.py --no-fetch # offline, cached refs
+python scripts/doctor.py --json     # machine-readable summary
+```
+
+Read-only (never commits/pushes). Cross-platform, stdlib + `git` only. Exit
+code `0` all-clear, `1` warnings, `2` failures — usable as a pre-flight gate.
+If it's all green here, another machine's `git pull` gets **every** skill.
+
 ## What's NOT in here (and why)
 
 The following live under `~/.claude/` but are deliberately excluded:

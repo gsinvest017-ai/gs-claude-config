@@ -2,3 +2,6 @@
 # Linux); CRLF line endings break the shebang and `set` parsing. Without this,
 # core.autocrlf=true on a Windows clone can hand out CRLF copies.
 *.sh text eol=lf
+# Python scripts (scripts/*.py) run cross-platform and carry a shebang; CRLF
+# would break `./script.py` on macOS/Linux. Keep them LF everywhere.
+*.py text eol=lf
