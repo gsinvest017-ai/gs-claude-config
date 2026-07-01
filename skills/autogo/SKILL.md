@@ -19,6 +19,44 @@ User input：`$ARGUMENTS`
 
 JSON 區塊內 `filter_aliases` 列出 user 給的所有 alias、`filter_unmatched` 列出沒匹配到任何 watcher 的 alias。**若 `filter_unmatched` 非空，回覆**開頭提醒 user**：「alias `xyz` 沒匹配到任何 watch 中的視窗，請去 /dash 確認該視窗是否已勾選」。
 
+## Step 0.3 — Smart Window Matching（無 `-w` 且有多個 active watcher）
+
+**條件**：`$ARGUMENTS` 非空 + 沒有 `-w` 旗標 + `[autogo-json]` 顯示 watcher 數量 > 1
+
+**行為**：在呼叫 context_cli 前先查 dashboard 的關鍵字匹配，自動選擇最相關的視窗：
+
+```bash
+./.venv/Scripts/python.exe -m autogo_dash.context_cli \
+  --format full \
+  --smart-match "<$ARGUMENTS 前100字>" 2>&1
+```
+
+`context_cli` 會自動：
+1. 呼叫 `/api/dash/context/match-windows?prompt=...`
+2. 根據 prompt 關鍵字比對所有 watcher 視窗的 title / app_name / alias
+3. 自動加上 `--window` 參數，只 fetch 最相關的視窗
+4. 在 stderr 輸出 `[smart-match] auto-selected: <alias>` 供參考
+
+**關鍵字規則（server 端）**：
+- `pytest`, `assert`, `fail`, `traceback` → 匹配含 "pytest"/"terminal"/"sandbox" 的視窗
+- `chrome`, `browser`, `http`, `url` → 匹配 Chrome / browser 視窗
+- `pdf`, `excel`, `word` → 匹配對應文件類型視窗
+- `db`, `sql`, `redis`, `database` → 匹配資料庫相關視窗
+- 無明顯匹配 → fallback 到全部 watcher（現有行為）
+
+**注意**：若 prompt 含明確的 `-w` 指定，smart-match 不啟動（explicit wins）。
+
+## Step 0.4 — Auto-probe 自動視窗探測（`auto_probed_window` 欄位）
+
+若 `[autogo-suggest]` 含 `auto_probed_window: <title>` 欄位，代表 hook 本次**自動掃描桌面視窗、找到匹配後做了一次性 OCR 並已自動啟動持久 watcher**。
+
+**處理方式**：
+- 在回應開頭加一行：「**已自動探測**視窗 `<auto_probed_window>`，開始監看。」
+- 若有 `auto_probed_alias`，提醒使用者可以用 `/autogo -w <alias>` 直接指定
+- 繼續處理注入的 context（走 inject path）
+
+這讓第一次使用無需任何手動設定：只要提示含關鍵字（pytest/chrome/pdf/db…），autogo 就會自動探測、掛載、並在當前對話裡注入 OCR context。
+
 ## Step 0.5 — `[autogo-suggest]` 自動觸發訊號（非 `/autogo` 指令時）
 
 若 context 含 `[autogo-suggest]…[/autogo-suggest]` 塊（由 auto-trigger hook 注入），格式為：
@@ -120,6 +158,20 @@ OCR 結果**會錯字、漏字、繁簡混雜**：
 - ❌ **不要** echo `[autogo-response]` / `[autogo-json]` / `[/autogo-json]` sentinel 本身、也不要 echo 整段 JSON 給 user（JSON 是給你 introspect 用的、user 自己會去 dashboard Copy JSON）。
 - ❌ **不要** 把 OCR 文字當 deterministic source of truth 下重大決策（請 user 在 `/inspect` 親眼確認）。
 - ❌ **不要** 在 FULL PATH 引用 `confidence` 數字後就拍胸脯「這個 95% 對」—— confidence 是模型自評、不等於正確率。需要 deterministic 時請 user 在 `/inspect` 對。
+
+## 盤勢訊號（market-intel）— 交易專用，非 OCR
+
+當 user 問的是**即時盤勢 / 交易訊號 / 風險**（如「現在盤勢有什麼訊號」「TAIEX 有沒有買賣訊號」「行情資料有沒有延遲」）時，**不要走 OCR context**——改打 market-intel CLI。它直接從 QUANTDATA API 取結構化資料 + 重用 trading-SySTEM 策略引擎，比 OCR 準確得多：
+
+```
+./.venv/Scripts/python.exe -m autogo_dash.market_intel_cli --symbols TAIEX,2330,0050
+```
+
+- 輸出 markdown 表：最新價 / 漲跌% / **BUY/SELL 訊號**（策略引擎產）/ **⚠ 資料延遲風險旗標**
+- exit `0`=ok / `3`=dashboard down（叫 user 啟 autogo）
+- 訊號區空代表目前盤勢在各指標下都是 HOLD（正常，不是錯誤）
+- `策略引擎未連` 代表 trading-SySTEM 沒裝/不可 import，此時只有報價+延遲、無訊號
+- 直接把這份 markdown 回給 user 即可；風險旗標（如「行情資料延遲」）屬最高優先級，務必凸顯
 
 ## 搭配 /loop 做定期監控
 
