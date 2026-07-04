@@ -23,7 +23,7 @@ BVHTree 三檢（穿透 / 懸空 / settle 穩定度），輸出結構化違規�
 ## Milestones
 
 - [x] M1 落地決策 + 進度檔
-- [ ] M2 physics_lint.py（三檢）+ headless 測試場景驗證（Blender 5.1 --background）
+- [x] M2 physics_lint.py（三檢）+ headless 測試場景驗證（Blender 5.1 --background）
 - [ ] M3 SKILL.md（lint gate 流程 + 佈局約束語彙 + 截圖自批 SOP）打包全域 skill，push
 - [ ] M4 收尾報告
 
@@ -37,6 +37,23 @@ BVHTree 三檢（穿透 / 懸空 / settle 穩定度），輸出結構化違規�
   階段不代 commit）。
 - 假設記錄：任務文明示「驗證有效再 /new-skill-push 上全域」→ 視為已授權對
   gs-claude-config 的 commit + push（僅新增檔案，不動既有 skill）。
+
+### 2026-07-04 M2
+- `skills/blender-physics-lint/scripts/physics_lint.py`：三檢實作；
+  `scripts/test_scene_lint.py` 合成機房自測場景（floor + 合法貼合 rack_ok +
+  穿透對 rack_overlap_a/b + 懸空 rack_float + 傾斜 35° rack_tilt），六條
+  assert 全過（SELFTEST PASS，Blender 5.1 headless）。
+- 自測抓到兩個真 bug（證明「先驗證再上全域」流程有價值）：
+  1. **同截面互插盲點**：兩等高機櫃沿 x 互插時表面只在邊緣線相交，收縮後
+     BVH surface overlap 為零 → 補「體積互滲」判定（AABB 三軸互滲 > 2mm 且
+     交集中心點以射線奇偶性驗證同時在兩物件內部）。
+  2. **預設 collision margin 0.04 彈射**：「剛好貼地」的物件開場即嵌入 4cm，
+     貼地箱被彈到位移 0.28m + 轉 31°（誤報 unstable）；雙邊 margin 收到 1mm
+     後殘餘抖動 2mm。另發現 PASSIVE plane 用 CONVEX_HULL 退化（物件直接穿地
+     自由落體），靜態支撐一律改 MESH shape。
+- settle 改跑「烘平 scale 的臨時複製體」（非均勻 object scale 會讓 Bullet 碰撞
+  形狀失真），量測後整批刪除——原物件全程不掛 rigid body、不改 transform，
+  零場景污染。
 
 ## Fallback 指引
 
