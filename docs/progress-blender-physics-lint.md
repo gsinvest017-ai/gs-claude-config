@@ -24,8 +24,8 @@ BVHTree 三檢（穿透 / 懸空 / settle 穩定度），輸出結構化違規�
 
 - [x] M1 落地決策 + 進度檔
 - [x] M2 physics_lint.py（三檢）+ headless 測試場景驗證（Blender 5.1 --background）
-- [ ] M3 SKILL.md（lint gate 流程 + 佈局約束語彙 + 截圖自批 SOP）打包全域 skill，push
-- [ ] M4 收尾報告
+- [x] M3 SKILL.md（lint gate 流程 + 佈局約束語彙 + 截圖自批 SOP）打包全域 skill，push
+- [x] M4 收尾報告
 
 ## 日誌
 
@@ -54,6 +54,18 @@ BVHTree 三檢（穿透 / 懸空 / settle 穩定度），輸出結構化違規�
 - settle 改跑「烘平 scale 的臨時複製體」（非均勻 object scale 會讓 Bullet 碰撞
   形狀失真），量測後整批刪除——原物件全程不掛 rigid body、不改 transform，
   零場景污染。
+
+### 2026-07-04 M3/M4
+- `skills/blender-physics-lint/SKILL.md`（CRLF）：核心迴圈「宣告約束 → 建模 →
+  lint → 修到全綠 → render 自批」；三檢修復順序（先 intersect/floating 再
+  unstable，至少跑兩輪）；佈局約束語彙 on_top_of / against_wall / facing /
+  min_gap / aligned_row / centered_on（LayoutVLM / Holodeck 思路、純 prompt
+  落地）；PolyHaven / Hyper3D 擬真 checklist；render 自批 SOP（EEVEE offscreen
+  viewport 全黑坑 → 用 bpy.ops.render.render 出 PNG）。
+- skill 放進 skills/ 載體即全域生效（~/.claude/skills symlink），已確認出現在
+  session 可用 skill 清單。
+- commit 鏈：ac8be4c(M1) → c56a974(M2) → 181ca52(chore) → 783b6f5(M3)，push 至
+  gsinvest017-ai/gs-claude-config main。
 
 ## Fallback 指引
 
