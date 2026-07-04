@@ -69,6 +69,25 @@ settle 自動跳過（列在 `skipped_settle`），所以全綠前至少要跑�
 3. 對每張圖自問：有沒有穿模/懸空看漏？比例對嗎（門比人高、椅子塞得進桌下）？
    材質像實物嗎？光影有沒有方向？——發現問題回到 §2 / §4 修。
 
+## 5.5 變換（transform）血淚教訓：先驗 mode、再驗生效（gs-oboe-twin 實案）
+
+同一批觀眾椅「旋轉 90°」連做三輪全部無效、還兩次把渲染圖裡的椅背腦補成椅面，
+被使用者連續指正才抓到根因。提煉成硬規則：
+
+1. **匯入資產（PolyHaven/Sketchfab/FBX/GLTF）的 `rotation_mode` 常是 `QUATERNION`**：
+   直接寫 `rotation_euler` 會被**靜默忽略**（no-op、無錯誤、euler 欄位照樣存值）。
+   轉匯入資產前一律先 `obj.rotation_mode = 'XYZ'`，或改寫 `rotation_quaternion` /
+   用矩陣合成：`obj.matrix_world = T(loc) @ Rz(θ) @ T(-loc) @ obj.matrix_world`。
+2. **改完變換必驗「有沒有生效」，不是只驗「對不對」**：四方位 probe——同一物件
+   轉 0°/90°/180°/270° 各渲一張小圖，**四張長一樣 = 變換根本沒生效**，先查
+   rotation_mode / constraint / parent / delta_transform，再談方向對錯。
+3. **前後難辨的模型（包覆式扶手椅、桶椅）別用斜角渲染判斷朝向**：從正對候選軸向
+   的相機平視拍（如 -Y 側看 local front），或用上面的四方位 probe 比對。
+4. **使用者說「沒變」時，預設他是對的**：先跑 probe 驗證生效性，不要重新解讀
+   同一張渲染圖來自圓其說（本案三次「沒變」全部屬實）。
+5. 使用者看到灰色場景 = viewport 在 Solid 著色模式，按 `Z` 選 Rendered（或代切
+   `area.spaces[0].shading.type = 'RENDERED'`），與渲染結果無關。
+
 ## 6. 注意事項與已知限制
 
 - lint 對場景**零污染**：settle 跑在烘平 scale 的臨時複製體上，原物件不掛
