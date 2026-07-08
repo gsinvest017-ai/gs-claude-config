@@ -1,11 +1,26 @@
 # gs-claude-config
 
-Version-controlled `~/.claude/` config — slash commands, skills, global instructions, and settings template. Two paths to onboard a new machine:
+Version-controlled `~/.claude/` config — slash commands, skills, subagents, global instructions, and settings template.
+
+## 👉 Installing this as a toolkit (for other users)
+
+Want the skills / commands / agents / autopilot hooks on your own machine? See **[INSTALL.md](INSTALL.md)**. Two one-click paths:
+
+| Path | How | Best for |
+|------|-----|----------|
+| **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` | Native, nothing copied into `~/.claude`, one-command |
+| **Install script** | `curl -fsSL …/install-toolkit.sh \| bash` · `irm …/install-toolkit.ps1 \| iex` | Universal, copies into `~/.claude`, sets the autopilot block-cap env |
+
+Both are non-destructive: existing same-named items are backed up, `settings.json` is merged (never clobbered), and your own `CLAUDE.md` is never touched. Uninstall with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.
+
+## Contributor onboarding (the author's own machines)
+
+The paths below are for **Kevin's** cross-machine sync — they symlink a personal `CLAUDE.md`, clone a personal sibling fork, and set personal `additionalDirectories`. New users should use INSTALL.md above instead.
 
 | Path | OS | One-liner | Best for |
 |------|----|-----------|----------|
 | **chezmoi** | Windows / macOS / Linux | `chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git` | New colleagues — handles prompts, installs apps, sets fonts |
-| install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | Existing setup, advanced users who want full symlink control |
+| install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | The contributor's full symlink-based sync |
 
 Pick whichever fits — both can coexist on the same machine; only the contributor (Kevin) needs the symlink path.
 
