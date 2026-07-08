@@ -32,6 +32,22 @@
 - M3：consumer 安裝／解除安裝腳本 + Node 版 settings 安全 merge。sandbox HOME 全流程驗證：安裝 20 cmd/39 skill/5 agent、保留使用者自有 skill 與 model/theme、hooks 併入且冪等（3× 不重複）、uninstall 完整還原。
 - M4：`INSTALL.md`（EN + 中文，含 plugin env-cap 限制說明）、README 新增「for other users」區塊並把作者 symlink 路徑標為 contributor-only。
 
+## 追加：Gap 1 — plugin 拆成兩包（隔離／插拔強化）
+起因：/survey-first 結論指出唯一侵入性元素是「對所有 plugin 使用者常駐的 Stop hook」。
+改為讓 hook opt-in：
+
+- `gs-claude-toolkit`（source `./`）— commands/skills/agents，**root 移除 `hooks/hooks.json` → 零 hook**。
+- `gs-autopilot`（source `./plugins/gs-autopilot`）— 專責 autopilot hook。
+  - `git mv hooks/hooks.json、hooks/autopilot.mjs` → `plugins/gs-autopilot/hooks/`（autopilot.mjs 從此唯一 canonical 在此）。
+  - `hooks.json` 內容不變（`${CLAUDE_PLUGIN_ROOT}/hooks/autopilot.mjs` 對新 plugin root 仍成立）。
+- `marketplace.json` 改列兩個 plugin；root `plugin.json` 註明零 hook。
+- `install-toolkit.{sh,ps1}` 的 autopilot.mjs 來源路徑改指 `plugins/gs-autopilot/hooks/autopilot.mjs`。
+- 文件（INSTALL/README）補：兩包安裝指令、`/plugin disable|uninstall|marketplace remove`、
+  **測試 release 用 `claude --plugin-dir` 或乾淨 `CLAUDE_CONFIG_DIR`，不碰真實 `~/.claude`**。
+
+外部使用者影響：只裝 base plugin → hook footprint = 0；command 命名空間化不衝突；
+先前「重複 skill / hook 雙觸發」只發生在「已用 symlink 裝過同一套」的作者機器，乾淨使用者不受影響。
+
 ## 尚待人工確認
 - **commit**：依 harness 規則「使用者未明說前不自動 commit」，本次變更尚未 commit，等使用者確認。
 - **plugin `/plugin install` 實測**：manifest 已 JSON 驗證，但尚未在真實 Claude Code marketplace 流程跑過一次（需 push 到 GitHub 後由外部使用者端驗證）。

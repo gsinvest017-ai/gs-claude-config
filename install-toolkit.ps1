@@ -105,7 +105,7 @@ if (-not $NoHooks) {
     Write-Host '==> Autopilot hook + settings.json'
     $HooksDir = Join-Path $ClaudeDir 'hooks'
     if (-not (Test-Path $HooksDir)) { New-Item -ItemType Directory -Path $HooksDir | Out-Null }
-    Copy-Item -Force (Join-Path $RepoDir 'hooks\autopilot.mjs') (Join-Path $HooksDir 'autopilot.mjs')
+    Copy-Item -Force (Join-Path $RepoDir 'plugins\gs-autopilot\hooks\autopilot.mjs') (Join-Path $HooksDir 'autopilot.mjs')
     $HookMjs = (Join-Path $HooksDir 'autopilot.mjs')
     $HookCmd = 'node "' + $HookMjs + '"'
     $Settings = Join-Path $ClaudeDir 'settings.json'

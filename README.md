@@ -8,7 +8,7 @@ Want the skills / commands / agents / autopilot hooks on your own machine? See *
 
 | Path | How | Best for |
 |------|-----|----------|
-| **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` | Native, nothing copied into `~/.claude`, one-command |
+| **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` (+ optional `gs-autopilot@gs-claude-toolkit` for the `/autopilot` hook) | Native, nothing copied into `~/.claude`, base plugin ships zero hooks |
 | **Install script** | `curl -fsSL …/install-toolkit.sh \| bash` · `irm …/install-toolkit.ps1 \| iex` | Universal, copies into `~/.claude`, sets the autopilot block-cap env |
 
 Both are non-destructive: existing same-named items are backed up, `settings.json` is merged (never clobbered), and your own `CLAUDE.md` is never touched. Uninstall with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.

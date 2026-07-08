@@ -121,7 +121,7 @@ install_group agents
 if [[ "$DO_HOOKS" -eq 1 ]]; then
     echo "==> Autopilot hook + settings.json"
     mkdir -p "$CLAUDE_DIR/hooks"
-    cp -f "$REPO_DIR/hooks/autopilot.mjs" "$CLAUDE_DIR/hooks/autopilot.mjs"
+    cp -f "$REPO_DIR/plugins/gs-autopilot/hooks/autopilot.mjs" "$CLAUDE_DIR/hooks/autopilot.mjs"
     HOOK_CMD="node \"$CLAUDE_DIR/hooks/autopilot.mjs\""
     if [[ -e "$CLAUDE_DIR/settings.json" ]]; then
         mkdir -p "$BACKUP_DIR"

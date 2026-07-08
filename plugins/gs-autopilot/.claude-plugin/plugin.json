@@ -1,0 +1,13 @@
+{
+  "name": "gs-autopilot",
+  "description": "Optional autopilot Stop-hook for gs-claude-toolkit: forces a session to keep working until a done sentinel or the iteration ceiling. Install this ONLY if you want /autopilot — the base gs-claude-toolkit plugin ships zero hooks.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Kevin",
+    "email": "gsinvest017@gsinvest.com.tw"
+  },
+  "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+  "repository": "https://github.com/gsinvest017-ai/gs-claude-config",
+  "license": "MIT",
+  "keywords": ["hooks", "autopilot", "automation"]
+}

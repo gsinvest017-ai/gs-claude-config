@@ -1,6 +1,6 @@
 {
   "name": "gs-claude-toolkit",
-  "description": "39 skills, 20 slash commands, 5 subagents, and cross-platform autopilot hooks for Claude Code. Auto-discovers commands/, skills/, agents/, and hooks/hooks.json from the repo root.",
+  "description": "39 skills, 20 slash commands, and 5 subagents for Claude Code. Auto-discovers commands/, skills/, agents/ from the repo root. Ships ZERO hooks — install the separate gs-autopilot plugin if you want the /autopilot Stop-hook.",
   "version": "1.0.0",
   "author": {
     "name": "Kevin",
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
   "repository": "https://github.com/gsinvest017-ai/gs-claude-config",
   "license": "MIT",
-  "keywords": ["skills", "commands", "agents", "hooks", "autopilot", "quant", "productivity"]
+  "keywords": ["skills", "commands", "agents", "quant", "productivity"]
 }

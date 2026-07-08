@@ -17,25 +17,59 @@ machine). No `jq`, no admin, no Windows Developer Mode.
 
 ## Option A — Claude Code plugin (recommended, most "one-click")
 
-Native to Claude Code. Inside a Claude Code session:
+Native to Claude Code. The marketplace ships **two** plugins so the invasive
+bit (a hook) is opt-in:
+
+| Plugin | Contains | Hook footprint |
+|--------|----------|----------------|
+| `gs-claude-toolkit` | 39 skills, 20 commands, 5 agents | **none** — fully passive |
+| `gs-autopilot` | the `/autopilot` Stop-hook | registers a Stop hook that runs each turn-end |
+
+Inside a Claude Code session:
 
 ```
 /plugin marketplace add gsinvest017-ai/gs-claude-config
-/plugin install gs-claude-toolkit@gs-claude-toolkit
+/plugin install gs-claude-toolkit@gs-claude-toolkit      # skills/commands/agents, zero hooks
+/plugin install gs-autopilot@gs-claude-toolkit           # OPTIONAL — only if you want /autopilot
 ```
 
 Or run `/plugin`, pick **Browse marketplaces → gs-claude-toolkit**, and install
 from the menu. Restart when prompted.
 
-This registers all skills, commands, agents, and the autopilot hooks under the
-plugin — **without** copying anything into your `~/.claude/` or touching your
-`settings.json`. Disable/remove anytime from the `/plugin` menu.
+Plugins install into `~/.claude/plugins/` — **nothing** is copied into your
+`~/.claude/skills` etc. and your `settings.json` is not rewritten. Plugin
+commands/skills are namespaced (`/gs-claude-toolkit:safe-yolo`), so they never
+collide with your own. Disable/remove anytime:
 
-**One caveat:** a plugin can't raise `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`, so
-`/autopilot` continuations are capped at Claude Code's built-in limit. If you
-want the full 50-round autopilot, either add `"env": {
+```
+/plugin disable gs-autopilot@gs-claude-toolkit           # keep installed, stop the hook
+/plugin uninstall gs-claude-toolkit@gs-claude-toolkit    # remove entirely
+/plugin marketplace remove gs-claude-toolkit             # drop the whole catalog
+```
+
+**Autopilot caveat:** a plugin can't raise `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`,
+so `/autopilot` continuations are capped at Claude Code's built-in limit. For
+the full 50-round autopilot, either add `"env": {
 "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60" }` to your `settings.json`, or use
 Option B (which sets it for you).
+
+### Testing this release safely (for you or a tester)
+
+Test the plugin **without touching your real `~/.claude`**, pick one:
+
+```bash
+# 1. Load the local checkout directly — no marketplace, no install, no config writes:
+claude --plugin-dir /path/to/gs-claude-config
+
+# 2. Or a throwaway config dir (may prompt for login the first time):
+CLAUDE_CONFIG_DIR=/tmp/cc-test claude
+#   then inside:  /plugin marketplace add gsinvest017-ai/gs-claude-config  → install → test
+#   cleanup:      rm -rf /tmp/cc-test
+```
+
+On a **clean machine** you can also just install normally — a fresh user has no
+pre-existing copies, so there are no duplicate skills and (installing only the
+base plugin) no hooks at all.
 
 ---
 
@@ -109,12 +143,22 @@ backups under `~/.claude/backups/` are left in place.
 
 兩條「一鍵安裝」路徑，二選一或並存：
 
-- **A. Claude Code plugin（推薦、最一鍵）**：在 Claude Code 內執行
-  `/plugin marketplace add gsinvest017-ai/gs-claude-config` 再
-  `/plugin install gs-claude-toolkit@gs-claude-toolkit`。skills/commands/agents/hooks
-  全由 plugin 管理，**不動**你的 `~/.claude/` 與 `settings.json`。唯一限制：plugin
-  無法調高 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`，`/autopilot` 續跑會受 Claude Code 內建
-  上限；要跑滿 50 次請自行在 `settings.json` 加該 env，或改用 B。
+- **A. Claude Code plugin（推薦、最一鍵）**：marketplace 提供**兩個** plugin，把有
+  侵入性的 hook 拆成 opt-in：
+  - `gs-claude-toolkit` — 39 skills / 20 commands / 5 agents，**零 hook**（完全被動）
+  - `gs-autopilot` — `/autopilot` 的 Stop hook，**想要才裝**
+  ```
+  /plugin marketplace add gsinvest017-ai/gs-claude-config
+  /plugin install gs-claude-toolkit@gs-claude-toolkit   # 零 hook
+  /plugin install gs-autopilot@gs-claude-toolkit        # 選用
+  ```
+  plugin 檔案進 `~/.claude/plugins/`，**不動**你的 `~/.claude/skills` 與
+  `settings.json`；command 有命名空間（`/gs-claude-toolkit:*`）不會衝突。移除：
+  `/plugin uninstall …`、`/plugin marketplace remove gs-claude-toolkit`。
+  限制：plugin 無法調高 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`，`/autopilot` 續跑受內建上限；
+  要跑滿 50 次請自行加該 env 或改用 B。
+  **測試 release**：用 `claude --plugin-dir <本地 checkout>` 或乾淨的
+  `CLAUDE_CONFIG_DIR=/tmp/cc-test claude` 測，真實 `~/.claude` 完全不碰。
 
 - **B. 安裝腳本（通用、遠端一行）**：
   - macOS/Linux/WSL：`curl -fsSL .../install-toolkit.sh | bash`
