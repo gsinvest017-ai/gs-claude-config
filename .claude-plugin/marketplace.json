@@ -1,0 +1,22 @@
+{
+  "name": "gs-claude-toolkit",
+  "owner": {
+    "name": "Kevin",
+    "email": "gsinvest017@gsinvest.com.tw"
+  },
+  "metadata": {
+    "description": "gs-claude-config as a one-click Claude Code plugin: 39 skills, 20 slash commands, 5 subagents, and the autopilot hooks.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "gs-claude-toolkit",
+      "source": "./",
+      "description": "Skills (autopilot, safe-yolo, survey-first, repo-scan, daily-summary, git-tag, quant-researcher, blender-physics-lint, and 30+ more), slash commands, subagents, and cross-platform autopilot hooks.",
+      "version": "1.0.0",
+      "author": { "name": "Kevin" },
+      "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+      "keywords": ["skills", "commands", "agents", "hooks", "autopilot", "quant", "productivity"]
+    }
+  ]
+}
