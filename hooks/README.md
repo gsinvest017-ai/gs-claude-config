@@ -34,6 +34,21 @@
 ### 為什麼要提高 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`
 Claude Code 內建「連續 block 上限 8 次」硬煞車。要讓 autopilot 跑滿 50 次續跑，`settings.json` 的 `env` 已把上限提到 `60`（略高於 50 留 buffer）。此 env 全域生效但無害：唯一會 block 的 hook 是 autopilot，且被旗標檔 gate，未啟用時沒有任何 hook 會 block。
 
+### 回歸測試（改這兩支 hook 前後都要跑）
+
+```powershell
+pwsh ~\.claude\tests\autopilot-stress.ps1          # 全實作、完整 50 輪上限壓測
+pwsh ~\.claude\tests\autopilot-stress.ps1 -Quick   # 5 輪快篩
+```
+
+`tests/autopilot-stress.ps1` 把真正的 hook 當子程序跑、餵合成 stdin payload，並把
+`USERPROFILE`/`HOME` 指到 temp 沙盒，**不會動到跑測試那個 session 的 autopilot 狀態**。
+同一份案例表跑 `ps1` / `sh` / `mjs` 三個實作以抓實作漂移（`.sh` 需 jq，缺了會報 SKIP）。
+
+> **SOP**：改 repo → 跑 harness → 複製到 `~/.claude/hooks/`（install 是逐檔複製，不是
+> symlink，不同步等於沒修）→ 再跑一次 harness。已知限制與踩過的坑見
+> `docs/progress-autopilot-stress.md`。
+
 ## 安裝 / 合併到 settings.json
 
 `install.ps1` / `install.sh` 會複製本目錄的 autopilot hooks 到 `~/.claude/hooks/`，並在**全新**渲染 `settings.json` 時注入 UserPromptSubmit + Stop hook + env。
