@@ -23,8 +23,12 @@ command -v jq >/dev/null 2>&1 || exit 0
 prompt="$(printf '%s' "$stdin" | jq -r '.prompt // ""')"
 session_id="$(printf '%s' "$stdin" | jq -r '.session_id // ""')"
 
-if [[ "$prompt" =~ ^[[:space:]]*/autopilot[[:space:]]+on([[:space:]]+(.*))?$ ]]; then
-    task="${BASH_REMATCH[2]}"
+# Match only the command head: bash ERE has no dotall, so a `(.*)$` capture
+# could never match a multi-line prompt and the hook exited 0 without arming
+# (silent failure — the user believed autopilot was on). The task is instead
+# taken by stripping the command prefix off line 1, keeping any later lines.
+if [[ "$prompt" =~ ^[[:space:]]*/autopilot[[:space:]]+on([[:space:]]|$) ]]; then
+    task="$(printf '%s' "$prompt" | sed -E '1s@^[[:space:]]*/autopilot[[:space:]]+on[[:space:]]*@@')"
     mkdir -p "$AUTOPILOT_DIR"
     rm -f "$DONE_PATH"
     jq -nc --arg s "$session_id" --arg t "$task" \

@@ -31,7 +31,11 @@ $autopilotDir = Join-Path $env:USERPROFILE '.claude\.autopilot'
 $statePath    = Join-Path $autopilotDir 'state.json'
 $donePath     = Join-Path $autopilotDir 'done'
 
-if ($prompt -match '^\s*/autopilot\s+on\b\s*(.*)$') {
+# (?s) makes `.` match newlines so a multi-line task description still arms.
+# Without it the whole match failed on a multi-line prompt and this hook exited
+# 0 without creating the flag — the user saw no error and believed autopilot was
+# on when it was not.
+if ($prompt -match '(?s)^\s*/autopilot\s+on\b\s*(.*)$') {
     $task = $Matches[1].Trim()
     New-Item -ItemType Directory -Force -Path $autopilotDir | Out-Null
     Remove-Item -LiteralPath $donePath -Force -ErrorAction SilentlyContinue
@@ -42,7 +46,10 @@ if ($prompt -match '^\s*/autopilot\s+on\b\s*(.*)$') {
         started        = (Get-Date -Format o)
         task           = $task
     }
-    ($state | ConvertTo-Json -Compress) | Set-Content -LiteralPath $statePath -Encoding UTF8
+    # BOM-less on every engine: Set-Content -Encoding UTF8 emits a BOM under
+    # Windows PowerShell 5.1, which the .sh / .mjs readers cannot parse.
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Compress), $utf8NoBom)
 
     $ctx = "autopilot 已武裝（session 已綁定，續跑上限 50）。立即開始執行任務，全程不要停、不要反問方向、不要再自行建立 state.json。完成且驗證通過後執行 New-Item -ItemType File `"$donePath`" -Force 再結束。"
     $out = @{ hookSpecificOutput = @{ hookEventName = "UserPromptSubmit"; additionalContext = $ctx } } | ConvertTo-Json -Compress

@@ -43,7 +43,9 @@ function safeParse(s) {
 
 function readState() {
   try {
-    const raw = readFileSync(STATE_PATH, 'utf8');
+    // Strip a leading BOM: a flag written by Windows PowerShell 5.1 carries one
+    // and JSON.parse throws on it, which would silently disarm autopilot.
+    const raw = readFileSync(STATE_PATH, 'utf8').replace(/^\uFEFF/, '');
     return raw.trim() ? JSON.parse(raw) : null;
   } catch {
     return null;

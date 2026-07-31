@@ -384,14 +384,14 @@ $CASES = @(
         }
     }
     @{
-        Id = 'V12'; Name = 'state.json 帶 UTF-8 BOM → 不得 crash（跨實作行為差異記錄）'
+        Id = 'V12'; Name = 'state.json 帶 UTF-8 BOM → 仍須正常續跑（PS 5.1 寫出的旗標）'
         Body = {
             param($impl, $sb)
             Set-SandboxState $sb -Bom
             $r = Invoke-Hook $impl Stop @{ session_id = 'sess-A' } $sb
             Assert-Equal 0 $r.ExitCode 'exit code'
-            if ($r.Blocked) { return 'BOM 可解析 → 正常續跑' }
-            return 'BOM 導致解析失敗 → fail-open（autopilot 靜默失效）'
+            Assert-Equal 'block' $r.Decision 'BOM 不該讓 autopilot 靜默失效（解析失敗會 fail-open）'
+            Assert-Equal 1 (Get-SandboxState $sb).iterations '計數應照常 +1'
         }
     }
     @{

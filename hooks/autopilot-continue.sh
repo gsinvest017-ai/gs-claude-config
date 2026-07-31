@@ -30,7 +30,9 @@ session_id="$(printf '%s' "$stdin" | jq -r '.session_id // ""')"
 # Valve 2: no flag file -> autopilot off.
 [[ -f "$STATE_PATH" ]] || exit 0
 
-state="$(cat "$STATE_PATH" 2>/dev/null)" || exit 0
+# Strip a leading UTF-8 BOM: a flag written by Windows PowerShell 5.1 carries
+# one and jq refuses to parse it, which would silently disarm autopilot.
+state="$(sed '1s/^\xEF\xBB\xBF//' "$STATE_PATH" 2>/dev/null)" || exit 0
 [[ -n "$state" ]] || exit 0
 
 # Valve 3: the flag must belong to THIS session. The arm hook

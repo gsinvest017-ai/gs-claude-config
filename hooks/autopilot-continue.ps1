@@ -78,11 +78,21 @@ if ($iterations -ge $maxIter) {
 }
 
 # --- continue: bump counter, block the stop, instruct next step ------------
-$state.iterations = $iterations + 1
-($state | ConvertTo-Json -Compress) | Set-Content -LiteralPath $statePath -Encoding UTF8
+# Add-Member -Force sets the property whether or not it already exists. Plain
+# `$state.iterations = ...` silently no-ops on a PSCustomObject that lacks the
+# property (a hand-written or older flag file), which froze the counter at 0 and
+# disabled valve 5 completely — the loop then ran until Claude Code's own cap.
+$next = $iterations + 1
+$state | Add-Member -NotePropertyName 'iterations' -NotePropertyValue $next -Force
+
+# WriteAllText with an explicit BOM-less encoder: `Set-Content -Encoding UTF8`
+# writes a BOM under Windows PowerShell 5.1, and the .sh / .mjs readers of this
+# same flag file cannot parse a BOM.
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Compress), $utf8NoBom)
 
 $reason = @"
-[autopilot 進行中 — 第 $($state.iterations)/$maxIter 次續跑]
+[autopilot 進行中 — 第 $next/$maxIter 次續跑]
 尚未偵測到完成訊號，繼續推進任務的下一步，不要停下來。
 規則：
 - 遇到分歧自行採用最合理的預設值繼續，把假設記進進度檔；不要反問方向。
