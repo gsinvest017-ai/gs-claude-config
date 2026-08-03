@@ -101,7 +101,7 @@ Other key files (read on demand):
 
 # Behavior rules
 
-三條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
+四條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
 
 **1. Edit/Write 前先 Read 一次**（避免 `<tool_use_error>File has not been read yet`）。
 特別在同檔多輪編輯後，formatter / linter / 另一個 Bash 指令可能改過內容；重 Read 比較穩。
@@ -115,3 +115,11 @@ Other key files (read on demand):
 - **例外**：純機械式工具產生的 commit（dependabot bump、lockfile 重生、auto-merge）保留工具預設訊息；他人撰寫的 commit 不改。
 - **Why**：使用者主要語言為繁體中文，commit log 由本人直接 review，中文閱讀效率高；同時讓 `/git-tag` 切 milestone group / `/daily-summary` / `/copy-commits-button` 產出的中文摘要與 commit 標題語感一致，貼到工作群組不會有語言斷層。
 - **How to apply**：寫 commit message 前先想中文版主體，再決定要不要加 ASCII prefix；如果不確定某段該不該翻（如 stack trace、API 路徑），原樣保留並用中文做框架說明（例：`修正 /api/today-commits 在 path traversal 下回 500 的 bug`）。
+
+**4. 做完用量顧問（`claude-usage-advisor`）推薦的待辦，要讓它從清單上退場**。推薦有兩個來源，退場方式不同：
+- **scan 來源**（「無upstream」「N 檔未commit」）：衍生自即時 git 狀態，commit / push / 建 upstream 後**自己會消失**，不用做任何事。
+- **backlog 來源**（`backlog.json` 手動清單）：**不會自己消失**。做完後跑
+  `pwsh -File C:\Users\User\tools\claude-usage-advisor\Complete-Task.ps1 -Match <關鍵字> -Note <commit hash 或證據>`。
+  帶 `doneWhen` 客觀條件的項目會由 SessionEnd hook 的 `-Auto` 自動歸檔、不用手動；沒有 `doneWhen` 的（研究型、判準主觀）只能靠這條規則。
+- **Why**：backlog 沒有退場機制時會一直被推薦，使用者反覆被指派已經做完的事。實例：2026-08-03 清出 3 筆早就完成卻仍在清單上的殘留（gs-spec-forge 3 個 PoC、gs-agent-workshop video pipeline、gs-mlops-loop 進入實作）。
+- **How to apply**：收尾時若這次做的事對應到顧問推薦的 backlog 項目，就在最後一個 commit 後補跑 `Complete-Task.ps1`；不確定關鍵字是否唯一命中先加 `-DryRun`。**新增** backlog 項目時盡量附 `doneWhen`（`pathExists`（`path` 可含 `*`）/ `hasUpstream` / `gitLog`），能自動判定就不要靠人。也別反過來硬寫：條件不客觀時留空，比誤判把沒做完的事抹掉好。
