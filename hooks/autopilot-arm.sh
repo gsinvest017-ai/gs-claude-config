@@ -39,7 +39,9 @@ if [[ "$prompt" =~ ^[[:space:]]*/autopilot[[:space:]]+on([[:space:]]|$) ]]; then
     exit 0
 fi
 
-if [[ "$prompt" =~ ^[[:space:]]*/autopilot[[:space:]]+off\b ]]; then
+# NOTE: 不要用 `off\b` — \b 是 GNU glibc regex 的擴充，macOS 的 BSD libc
+# regex 不支援，會讓這條在 Mac 上永遠不匹配（/autopilot off 靜默失效）。
+if [[ "$prompt" =~ ^[[:space:]]*/autopilot[[:space:]]+off([[:space:]]|$) ]]; then
     rm -f "$STATE_PATH" "$DONE_PATH"
     exit 0
 fi
