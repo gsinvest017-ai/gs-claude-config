@@ -4,14 +4,15 @@ Version-controlled `~/.claude/` config — slash commands, skills, subagents, gl
 
 ## 👉 Installing this as a toolkit (for other users)
 
-Want the skills / commands / agents / autopilot hooks on your own machine? See **[INSTALL.md](INSTALL.md)**. Two one-click paths:
+Want the skills / commands / agents / autopilot hooks on your own machine? See **[INSTALL.md](INSTALL.md)**. Claude Code has two one-click paths, and Codex CLI has a Windows-native installer:
 
 | Path | How | Best for |
 |------|-----|----------|
 | **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` (+ optional `gs-autopilot@gs-claude-toolkit` for the `/autopilot` hook) | Native, nothing copied into `~/.claude`, base plugin ships zero hooks |
 | **Install script** | `curl -fsSL …/install-toolkit.sh \| bash` · `irm …/install-toolkit.ps1 \| iex` | Universal, copies into `~/.claude`, sets the autopilot block-cap env |
+| **Codex CLI install script** | `.\install-codex-toolkit.ps1 -BypassPermissions` | Copies shared skills into `~/.codex`, installs Codex-native hooks, optionally makes Codex sessions bypass approvals |
 
-Both are non-destructive: existing same-named items are backed up, `settings.json` is merged (never clobbered), and your own `CLAUDE.md` is never touched. Uninstall with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.
+All installer paths are non-destructive: existing same-named items are backed up, settings are merged (never clobbered), and your own global instructions are never touched. Uninstall Claude installs with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.
 
 ## Contributor onboarding (the author's own machines)
 
@@ -58,6 +59,8 @@ gs-claude-config/
 │   └── targets.conf.example     # template — copy to targets.conf per machine
 ├── docs/
 │   └── progress-night-shift-cron.md
+├── codex-hooks/              # ~/.codex/hooks/ - Codex-native autopilot hooks
+├── install-codex-toolkit.ps1 # copy skills/hooks into ~/.codex/
 ├── CLAUDE.md                 # ~/.claude/CLAUDE.md — global instructions
 ├── settings.template.json    # rendered → ~/.claude/settings.json on install
 └── install.sh                # symlink everything into ~/.claude/

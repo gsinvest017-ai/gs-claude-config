@@ -1,4 +1,4 @@
-﻿---
+---
 name: new-repo-push
 description: 在當前路徑用 gh 建立新 GitHub repo，git init（若未初始化）、stage 所有檔案、commit、設 remote、push。當使用者輸入 /new-repo-push、說「幫我建新 repo」、「init 並 push 到 GitHub」、「gh 建 repo 然後 push」、「新開一個 GitHub repo 並把現在的東西推上去」時啟動。預設 public；加 --private 建私有 repo。
 ---

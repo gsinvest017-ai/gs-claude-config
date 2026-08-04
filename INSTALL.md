@@ -8,7 +8,7 @@ coexist.
 > `install.ps1` and the chezmoi flow are the **author's** personal
 > cross-machine sync (they symlink a personal `CLAUDE.md`, clone a personal
 > fork, and set personal `additionalDirectories`) — not what you want as a new
-> user. Use the two paths below instead.
+> user. Use the consumer paths below instead.
 
 **Requirements:** `git`, and `node` (bundled with Claude Code — already on your
 machine). No `jq`, no admin, no Windows Developer Mode.
@@ -139,9 +139,75 @@ backups under `~/.claude/backups/` are left in place.
 
 ---
 
+## Option C — Codex CLI install script (Windows)
+
+Copies the shared `skills/` into `~/.codex/skills`, installs Codex-native
+autopilot hook scripts into `~/.codex/hooks`, and merges hook entries into
+`~/.codex/hooks.json`. It never writes `~/.claude`.
+
+From a local clone:
+
+```powershell
+git clone https://github.com/gsinvest017-ai/gs-claude-config.git
+cd gs-claude-config
+.\install-codex-toolkit.ps1
+```
+
+Remote one-liner:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-codex-toolkit.ps1)))
+```
+
+To make new Codex sessions default to bypass-style permissions:
+
+```powershell
+.\install-codex-toolkit.ps1 -BypassPermissions
+```
+
+That flag backs up `~/.codex/config.toml`, then writes top-level:
+
+```toml
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+```
+
+### What it does — and what it never touches
+
+- **Copies** each item in `skills/` into `~/.codex/skills` (default; use
+  `-Link` to symlink instead).
+- Copies `codex-hooks/autopilot-*.ps1` into `~/.codex/hooks/` and **merges**
+  two hook entries into `~/.codex/hooks.json` idempotently.
+- Any pre-existing same-named skill is **backed up** to
+  `~/.codex/backups/toolkit-<timestamp>/` first.
+- `-BypassPermissions` only edits Codex's `config.toml`, never Claude's
+  `settings.json`.
+- It does **not** install Claude slash commands or subagents, because Codex CLI
+  consumes the `SKILL.md`-based skills directly.
+
+### Flags
+
+| Windows | Effect |
+|---------|--------|
+| `-Link` | Symlink instead of copy (Windows needs Dev Mode or admin) |
+| `-NoHooks` | Skip the Codex autopilot hook + `hooks.json` merge |
+| `-BypassPermissions` | Set Codex defaults to `approval_policy = "never"` and `sandbox_mode = "danger-full-access"` |
+| `-Dir <path>` | Install from a local checkout instead of cloning |
+| `-RepoUrl <url>` | Override the clone URL (e.g. your fork) |
+| `-Branch <name>` | Branch to clone (default `main`) |
+
+### Verify
+
+```powershell
+Get-ChildItem ~/.codex/skills | Select-Object -First 5
+Get-Content ~/.codex/hooks.json -Raw
+Get-Content ~/.codex/config.toml -Raw | Select-String 'approval_policy|sandbox_mode'
+```
+
+---
 ## 中文摘要
 
-兩條「一鍵安裝」路徑，二選一或並存：
+Claude Code 兩條「一鍵安裝」路徑，Codex CLI 另有一條 Windows 安裝路徑，可並存：
 
 - **A. Claude Code plugin（推薦、最一鍵）**：marketplace 提供**兩個** plugin，把有
   侵入性的 hook 拆成 opt-in：
@@ -167,5 +233,12 @@ backups under `~/.claude/backups/` are left in place.
     `~/.claude/`，並把 autopilot hook **安全併入** `settings.json`（不覆蓋你既有設定、
     不裝 `CLAUDE.md`）。同名項目先備份到 `~/.claude/backups/`。
   - 解除安裝：`./uninstall-toolkit.sh`（或 `.\uninstall-toolkit.ps1`）。
+- **C. Codex CLI 安裝腳本（Windows）**：
+  - `.\install-codex-toolkit.ps1` 只寫 `~/.codex/`，不碰 `~/.claude/`。
+  - 把 `skills/` 複製到 `~/.codex/skills`，把 Codex 版 autopilot hook 併入
+    `~/.codex/hooks.json`。
+  - 想讓 Codex session 預設 bypass permission：加 `-BypassPermissions`，會把
+    `approval_policy = "never"` 與 `sandbox_mode = "danger-full-access"` 寫入
+    `~/.codex/config.toml`，並先備份原檔。
 
 需求：`git` 與 `node`（Claude Code 已內建）。不需要 `jq`、不需要管理員權限。
