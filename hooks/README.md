@@ -103,3 +103,53 @@ pwsh ~\.claude\tests\autopilot-stress.ps1 -Quick   # 5 輪快篩
 - `skills/safe-yolo` — 純 prompt 軟模式（模型自願不停）
 - `skills/autopilot` + 本 hook — 互動 session 內**硬強制**不停
 - `scripts/night-shift.sh` — headless 跨-session 迴圈（外層 `claude -p`）
+
+---
+
+## kan-context.ps1 — 提到 ticket 編號就注入現況
+
+搭配 `skills/kan`（Jira 看板 CLI）。使用者 prompt 裡出現 `KAN-123` 這種編號時，
+即時查那幾張單的狀態／負責人／標題並注入 context，省掉「先查再答」的往返。
+純唯讀，最多 5 張，查不到的 key 會明確列出（避免模型以為自己看漏）。
+
+**這支不進 `settings.template.json`**（那份是 autopilot 專用、帶佔位符替換），
+請手動 append 到 `~/.claude/settings.json` 的 `hooks.UserPromptSubmit` 陣列：
+
+```json
+{
+  "matcher": "[Kk][Aa][Nn]-[0-9]+",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "pwsh -NoProfile -NonInteractive -File \"C:\\Users\\User\\.claude\\hooks\\kan-context.ps1\"",
+      "timeout": 10
+    }
+  ]
+}
+```
+
+並把腳本複製過去（`~/.claude/hooks/` 是**實體目錄**，不像 `~/.claude/skills`
+是指向本 repo 的 symlink，所以改完 repo 要再複製一次）：
+
+```powershell
+Copy-Item hooks\kan-context.ps1 "$HOME\.claude\hooks\" -Force
+```
+
+### 兩個設計重點
+
+**守門在 `matcher` 不在腳本裡。** UserPromptSubmit 的每個項目是**獨立的**、各自
+拿到完整 payload（不是把前一支的 stdout 當 stdin 串起來）。matcher 沒命中就不會
+spawn pwsh，省下每次 prompt 約 340ms 的啟動成本；沒有這道守門，一支「大部分時候
+立刻 exit」的 hook 仍然要付全額啟動代價。
+
+**永遠 exit 0。** 沒裝 kan、憑證過期、Jira 掛掉，一律安靜跳過。hook 不該把
+使用者的 prompt 擋下來。
+
+### 驗證
+
+```powershell
+# 無編號 → 零輸出
+'{"prompt":"今天天氣不錯"}' | pwsh -NoProfile -NonInteractive -File hooks\kan-context.ps1
+# 有編號 → 回 hookSpecificOutput.additionalContext
+'{"prompt":"KAN-443 怎樣"}' | pwsh -NoProfile -NonInteractive -File hooks\kan-context.ps1
+```
