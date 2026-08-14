@@ -62,6 +62,7 @@ description: Windows / PowerShell / WSL / 排程 / MCP 環境的「已知陷阱�
 | 專案層 `.claude/settings.json` 整份沒作用 | workspace 未受信任會**整份忽略**專案層權限設定 | 找 CLI 啟動時的 `Ignoring` 警告 |
 | MCP server 回 `-32000` | Windows 下用了裸 `npx`，PATH 沒有 Node | 改絕對路徑 `npx.cmd` |
 | 改了 MCP 設定沒生效 | `/mcp` reconnect **不會**重讀 `~/.claude.json` | 完全重啟 Claude Code |
+| 剪取工具截圖後 `Ctrl+V` 貼不進去、**靜默無反應** | Windows 上 `chat:imagePaste` 官方預設是 **`Alt+V`**。`Ctrl+V` 是 Windows Terminal 自己的 binding，它只取 `CF_UNICODETEXT`；剪貼簿只有點陣圖時取到空 → 送 0 bytes → Claude Code **連按鍵都沒收到** | 改按 `Alt+V`（2.1.227 實測正常）。檔案總管 `Ctrl+C` 複製圖檔則一直可用，因為那是 `CF_HDROP` 路徑清單 |
 
 ## 6. dap CLI（debugging-code skill 的後端）
 
