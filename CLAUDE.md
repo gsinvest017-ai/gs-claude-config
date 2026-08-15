@@ -16,6 +16,21 @@
 
 # Persistent Project Awareness
 
+## 跨 repo 路由地圖（gs-repo-atlas）— 跨 repo 任務的第一站
+
+Path: `C:\Users\User\gs-repo-atlas`（Windows-native，掃描涵蓋 Windows + WSL 兩個 root）
+
+**任何跨 repo / 找不到東西在哪個 repo 的任務，先讀 `atlas/ROUTING.md` 拿全景，再依 `key:` 指到的檔案往下鑽——不要盲掃 codebase、不要靠猜 repo 名。**
+
+- `atlas/ROUTING.md` — 全部 repo 的路由地圖，依 8 桶（`gs-meta-*` 分類法）分群，每 repo 給 purpose / entry / key files / deps→ / spec。約 8.7k tokens。
+- `atlas/repos/<name>.md` — 單 repo 細節（模組架構圖、資料流圖、spec rules、關鍵模組），確定目標 repo 後再讀這份。
+- `atlas/ATLAS.md` — 跨 repo 依賴總覽（Mermaid）。
+- Dashboard：`python -m gs_repo_atlas serve --port 8803`。
+
+**刻意不用 `@` 自動 import**：ROUTING.md 每次 session 注入 8.7k tokens 不划算，改成「需要時才 Read」。
+
+資料新鮮度：`atlas/` 產出物**進版控**，所以檔案 mtime 等於 commit 時間、不等於掃描時間。要確認是否過期看 `git log -1 -- atlas/`，過期就跑 `.\run.ps1` 重掃（全量約 2–4 分鐘）。掃描每週一 07:30 由排程自動跑（`tools/register-schedule.ps1`）。
+
 ## gs-zipline-tej
 
 Path: `/home/kevin/gs-zipline-tej`
@@ -117,7 +132,7 @@ Other key files (read on demand):
 
 # Behavior rules
 
-四條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
+五條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
 
 **1. Edit/Write 前先 Read 一次**（避免 `<tool_use_error>File has not been read yet`）。
 特別在同檔多輪編輯後，formatter / linter / 另一個 Bash 指令可能改過內容；重 Read 比較穩。
@@ -139,3 +154,7 @@ Other key files (read on demand):
   帶 `doneWhen` 客觀條件的項目會由 SessionEnd hook 的 `-Auto` 自動歸檔、不用手動；沒有 `doneWhen` 的（研究型、判準主觀）只能靠這條規則。
 - **Why**：backlog 沒有退場機制時會一直被推薦，使用者反覆被指派已經做完的事。實例：2026-08-03 清出 3 筆早就完成卻仍在清單上的殘留（gs-spec-forge 3 個 PoC、gs-agent-workshop video pipeline、gs-mlops-loop 進入實作）。
 - **How to apply**：收尾時若這次做的事對應到顧問推薦的 backlog 項目，就在最後一個 commit 後補跑 `Complete-Task.ps1`；不確定關鍵字是否唯一命中先加 `-DryRun`。**新增** backlog 項目時盡量附 `doneWhen`（`pathExists`（`path` 可含 `*`）/ `hasUpstream` / `gitLog`），能自動判定就不要靠人。也別反過來硬寫：條件不客觀時留空，比誤判把沒做完的事抹掉好。
+
+**5. 跨 repo 任務先讀 `gs-repo-atlas/atlas/ROUTING.md`，再下鑽**（細節見上面「跨 repo 路由地圖」一節）。適用時機：問題牽涉一個以上 repo、不確定某功能在哪個 repo、要盤點/整合/搬移跨專案的東西、或被問「我有沒有做過 X」。
+- **Why**：本機有 110+ 個 repo（Windows + WSL 兩個 root）。不讀地圖就 Glob/Grep 全掃，是最常見的 token 黑洞，而且容易漏掉另一個 root 上的 repo、或誤中同名的第二份 clone。
+- **How to apply**：`Read C:\Users\User\gs-repo-atlas\atlas\ROUTING.md` → 從桶分群定位候選 repo → 讀 `atlas/repos/<name>.md` 拿模組圖與關鍵模組 → 才進實際 codebase。**不要**改成 `@` import 自動注入，那會每次 session 白付 8.7k tokens。
