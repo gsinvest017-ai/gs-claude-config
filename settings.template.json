@@ -56,6 +56,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -NonInteractive -File \"__HOME__/.claude/hooks/context-inject.ps1\""
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
