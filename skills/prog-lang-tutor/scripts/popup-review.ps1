@@ -48,7 +48,11 @@ try {
     exit 1
 }
 
-$points = @($bank.knowledge_points)
+# 頂層鍵向下相容：舊版 knowledge_points（如 gs-claude-config）、新版 points（如 gs-cuda-llm-ops）
+$pointsProp = $null
+if ($bank.PSObject.Properties['knowledge_points'] -and $bank.knowledge_points) { $pointsProp = 'knowledge_points' }
+elseif ($bank.PSObject.Properties['points'] -and $bank.points) { $pointsProp = 'points' }
+$points = if ($pointsProp) { @($bank.$pointsProp | Where-Object { $null -ne $_ }) } else { @() }
 if ($points.Count -eq 0) {
     [System.Windows.Forms.MessageBox]::Show(
         "knowledge.json has zero knowledge_points.`n$jsonPath",
@@ -75,7 +79,8 @@ $pick = $sorted[0]
 
 # ----- Build the WinForms popup -----
 $form = New-Object System.Windows.Forms.Form
-$form.Text = "prog-lang-tutor — $($bank.repo_slug) / $($bank.language)"
+$bankSlug = if ($bank.repo_slug) { $bank.repo_slug } else { $bank.repo }
+$form.Text = "prog-lang-tutor — $bankSlug / $($bank.language)"
 $form.StartPosition = 'CenterScreen'
 $form.Size = New-Object System.Drawing.Size(720, 620)
 $form.MinimumSize = New-Object System.Drawing.Size(520, 420)
@@ -195,7 +200,7 @@ if (-not $script:answerShown -or $script:userSkipped) {
 }
 
 $nowUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-foreach ($p in $bank.knowledge_points) {
+foreach ($p in $bank.$pointsProp) {
     if ($p.id -eq $pick.id) {
         $count = 0
         if ($p.reviewed_count) { $count = [int]$p.reviewed_count }

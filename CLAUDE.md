@@ -1,12 +1,43 @@
+<!-- BEGIN gh-branch-guard policy -->
+## 分支保護政策（不可協商）
+
+**`main` / `master` 是受保護分支。禁止直接 push，一律從 `dev/*` 分支開 Pull Request。**
+
+- 開工前先確認分支：`git rev-parse --abbrev-ref HEAD`。若在 `main`/`master`，先 `git checkout -b dev/<主題>`。
+- 允許的分支前綴：`dev/`（預設）、`feat/`、`fix/`、`hotfix/`、`claude/`、`agent/`。
+- **禁止**：`git push origin main|master`、`git push --force` 到受保護分支、`gh pr merge`（除非使用者本人是 admin 且明確要求）、修改或停用 ruleset / branch protection、改寫受保護分支歷史。
+- 若 push 被拒（`GH006` / `Repository rule violations found`），那是政策生效而非錯誤——改走 PR，不要繞過。
+- **任務完成的定義 = PR 已開啟**，不是 merge 完成。
+
+完整政策：[`.github/BRANCH-PROTECTION-POLICY.md`](.github/BRANCH-PROTECTION-POLICY.md)　·　Agent 守則：[`AGENTS.md`](AGENTS.md)
+<!-- END gh-branch-guard policy -->
+
+---
+
 # Persistent Project Awareness
+
+## 跨 repo 路由地圖（gs-repo-atlas）— 跨 repo 任務的第一站
+
+Path: `C:\Users\User\gs-repo-atlas`（Windows-native，掃描涵蓋 Windows + WSL 兩個 root）
+
+**任何跨 repo / 找不到東西在哪個 repo 的任務，先讀 `atlas/ROUTING.md` 拿全景，再依 `key:` 指到的檔案往下鑽——不要盲掃 codebase、不要靠猜 repo 名。**
+
+- `atlas/ROUTING.md` — 全部 repo 的路由地圖，依 8 桶（`gs-meta-*` 分類法）分群，每 repo 給 purpose / entry / key files / deps→ / spec。約 8.7k tokens。
+- `atlas/repos/<name>.md` — 單 repo 細節（模組架構圖、資料流圖、spec rules、關鍵模組），確定目標 repo 後再讀這份。
+- `atlas/ATLAS.md` — 跨 repo 依賴總覽（Mermaid）。
+- Dashboard：`python -m gs_repo_atlas serve --port 8803`。
+
+**刻意不用 `@` 自動 import**：ROUTING.md 每次 session 注入 8.7k tokens 不划算，改成「需要時才 Read」。
+
+資料新鮮度：`atlas/` 產出物**進版控**，所以檔案 mtime 等於 commit 時間、不等於掃描時間。要確認是否過期看 `git log -1 -- atlas/`，過期就跑 `.\run.ps1` 重掃（全量約 2–4 分鐘）。掃描每週一 07:30 由排程自動跑（`tools/register-schedule.ps1`）。
 
 ## gs-zipline-tej
 
-Path: `/home/kevin/gs-zipline-tej`
+Path: `C:\Users\User\gs-zipline-tej`
 A Zipline fork integrated with TEJ (Taiwan Economic Journal) data for Taiwan-market backtesting.
 
 Entry doc:
-@/home/kevin/gs-zipline-tej/README.md
+@C:\Users\User\gs-zipline-tej\README.md
 
 Other key files (read on demand):
 - `simple_run.md` / `simple_run_zw.md` — quick-start guides (EN / 中文)
@@ -18,11 +49,11 @@ Other key files (read on demand):
 
 ## gs-auto-fix
 
-Path: `/home/kevin/gs-auto-fix`
+Path: `C:\Users\User\gs-auto-fix`
 GitHub Actions 自動化流水線：CI 失敗 → 自動開 issue → Claude 修復並開 PR → Claude review → auto-merge。四段式無人介入 loop。
 
 Entry doc:
-@/home/kevin/gs-auto-fix/README.md
+@C:\Users\User\gs-auto-fix\README.md
 
 Other key files (read on demand):
 - `.github/workflows/ci.yml` — pytest + 失敗時 open-issue-on-failure
@@ -33,11 +64,11 @@ Other key files (read on demand):
 
 ## gs-strategy
 
-Path: `/home/kevin/gs-strategy`
+Path: `/home/kevin/gs-strategy`（**僅 WSL**，Windows 端沒有 clone）
 雙用途 repo：(1) `quant_crawler/` — 期貨/量化研究論文爬蟲（arXiv q-fin、NBER、RePEc NEP、FED FEDS、Wiley JFM、AQR），SQLite 去重 + relevance filter；(2) `strategies/` — 從爬到的論文挑出 4 支可在台灣期貨市場執行的策略（vgrsi_tx、cubic_momentum_tx、tsmom_tx_mtx、xsmom_stkfut_rmt），目標跑在 zipline-tej 的 `tquant_future` bundle。同時作為 Claude Code YOLO (bypassPermissions) 模式的 sandbox。
 
-Entry doc:
-@/home/kevin/gs-strategy/README.md
+Entry doc（WSL-only，**未自動注入**，Windows session 需自行從 WSL 讀）：
+`/home/kevin/gs-strategy/README.md`
 
 Other key files (read on demand):
 - `strategies/README.md` — 4 支策略一覽（標的、訊號類型、論文出處）與 `_common/runner` 執行流程
@@ -52,11 +83,11 @@ Other key files (read on demand):
 
 ## quant-research-skill
 
-Path: `/home/kevin/quant-research-skill`
+Path: `C:\Users\User\quant-research-skill`
 Claude Code skill pack：`/quant-researcher`（四階段策略產生：理論 → 文獻 → 回測 → 中文報告）與 `/review-strategy`（Jane Street 等級五階段審查，輸出 PASS/CONDITIONAL/FAIL 判定）。
 
 Entry doc:
-@/home/kevin/quant-research-skill/README.md
+@C:\Users\User\quant-research-skill\README.md
 
 Other key files (read on demand):
 - `skills/quant-researcher/SKILL.md` — 四階段研究 pipeline 完整 prompt
@@ -85,11 +116,11 @@ Other key files (read on demand):
 
 ## tutorial
 
-Path: `/home/kevin/tutorial`
+Path: `C:\Users\User\tutorial`
 量化策略研究員 / 量化開發工程師 onboarding 知識庫。四大模組：策略驗證術語、台灣半導體供應鏈、系統架構、Harness Engineering。
 
 Entry doc:
-@/home/kevin/tutorial/README.md
+@C:\Users\User\tutorial\README.md
 
 Other key files (read on demand):
 - `strategy/strategy-validation-terms.md` — 中英對照術語表（bps、Walk-Forward、IS/OOS Sharpe、Bonferroni、ADX 等）
@@ -101,10 +132,29 @@ Other key files (read on demand):
 
 # Behavior rules
 
-兩條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
+五條 cross-repo 規則，從 /cc-insights 找出的反覆踩坑提煉：
 
 **1. Edit/Write 前先 Read 一次**（避免 `<tool_use_error>File has not been read yet`）。
 特別在同檔多輪編輯後，formatter / linter / 另一個 Bash 指令可能改過內容；重 Read 比較穩。
 
 **2. Bash tool 中的 Windows 絕對路徑要 quote 或用正斜線**。
 反斜線會被 Bash 吃掉 — `ls C:\Users\User\autogo` 會變成 `ls C:UsersUserautogo` 然後失敗。寫成 `ls 'C:\Users\User\autogo'`、`ls "C:\Users\User\autogo"`、或 `ls /c/Users/User/autogo` 三選一。在 **PowerShell tool** 中沒這個問題，可正常用 `C:\...` 路徑。
+
+**3. Git commit message 的主體用繁體中文撰寫**。所有由 Claude 觸發的 `git commit`（含 `safe-yolo Mn:` 鏈、單發 `feat:` / `fix:` / `refactor:`、merge / revert）一律以繁體中文寫主體描述句。
+- **保留原文**：commit prefix（`Mn:` / `feat:` / `fix:` 等）、git trailer（`Co-Authored-By:` / `Signed-off-by:` / `Refs:`）、技術識別符（檔名、函式、`--apply` / `--force` 等 CLI flag、`SKILL.md`、`gs-trading-portal` 等專案名）、引用的英文錯誤訊息原樣。
+- **格式**：subject ≤ 72 字（不含 prefix），延續 safe-yolo「不要寫小說」原則——背景與細節寫進 body 或進度檔，不塞 subject。
+- **例外**：純機械式工具產生的 commit（dependabot bump、lockfile 重生、auto-merge）保留工具預設訊息；他人撰寫的 commit 不改。
+- **Why**：使用者主要語言為繁體中文，commit log 由本人直接 review，中文閱讀效率高；同時讓 `/git-tag` 切 milestone group / `/daily-summary` / `/copy-commits-button` 產出的中文摘要與 commit 標題語感一致，貼到工作群組不會有語言斷層。
+- **How to apply**：寫 commit message 前先想中文版主體，再決定要不要加 ASCII prefix；如果不確定某段該不該翻（如 stack trace、API 路徑），原樣保留並用中文做框架說明（例：`修正 /api/today-commits 在 path traversal 下回 500 的 bug`）。
+
+**4. 做完用量顧問（`claude-usage-advisor`）推薦的待辦，要讓它從清單上退場**。推薦有兩個來源，退場方式不同：
+- **scan 來源**（「無upstream」「N 檔未commit」）：衍生自即時 git 狀態，commit / push / 建 upstream 後**自己會消失**，不用做任何事。
+- **backlog 來源**（`backlog.json` 手動清單）：**不會自己消失**。做完後跑
+  `pwsh -File C:\Users\User\tools\claude-usage-advisor\Complete-Task.ps1 -Match <關鍵字> -Note <commit hash 或證據>`。
+  帶 `doneWhen` 客觀條件的項目會由 SessionEnd hook 的 `-Auto` 自動歸檔、不用手動；沒有 `doneWhen` 的（研究型、判準主觀）只能靠這條規則。
+- **Why**：backlog 沒有退場機制時會一直被推薦，使用者反覆被指派已經做完的事。實例：2026-08-03 清出 3 筆早就完成卻仍在清單上的殘留（gs-spec-forge 3 個 PoC、gs-agent-workshop video pipeline、gs-mlops-loop 進入實作）。
+- **How to apply**：收尾時若這次做的事對應到顧問推薦的 backlog 項目，就在最後一個 commit 後補跑 `Complete-Task.ps1`；不確定關鍵字是否唯一命中先加 `-DryRun`。**新增** backlog 項目時盡量附 `doneWhen`（`pathExists`（`path` 可含 `*`）/ `hasUpstream` / `gitLog`），能自動判定就不要靠人。也別反過來硬寫：條件不客觀時留空，比誤判把沒做完的事抹掉好。
+
+**5. 跨 repo 任務先讀 `gs-repo-atlas/atlas/ROUTING.md`，再下鑽**（細節見上面「跨 repo 路由地圖」一節）。適用時機：問題牽涉一個以上 repo、不確定某功能在哪個 repo、要盤點/整合/搬移跨專案的東西、或被問「我有沒有做過 X」。
+- **Why**：本機有 110+ 個 repo（Windows + WSL 兩個 root）。不讀地圖就 Glob/Grep 全掃，是最常見的 token 黑洞，而且容易漏掉另一個 root 上的 repo、或誤中同名的第二份 clone。
+- **How to apply**：`Read C:\Users\User\gs-repo-atlas\atlas\ROUTING.md` → 從桶分群定位候選 repo → 讀 `atlas/repos/<name>.md` 拿模組圖與關鍵模組 → 才進實際 codebase。**不要**改成 `@` import 自動注入，那會每次 session 白付 8.7k tokens。

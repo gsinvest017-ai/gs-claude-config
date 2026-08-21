@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "description": "autogo auto-trigger policy — 基於 test bench A/B 實驗結論。修改此檔案更新觸發規則，無需改動 hook 或 SKILL.md。",
+  "active_experiment": "exp-005-tail20-policy",
+  "cooldown_s": 15,
+  "context_cli_args": ["--tail", "20"],
+  "rules": [
+    {
+      "id": "pytest-debug-short",
+      "description": "pytest 短輸出 + debug 關鍵字 → 注入（A/B 實驗：省 2 turn，-11% duration）",
+      "enabled": true,
+      "priority": 10,
+      "match": {
+        "keywords_any": ["pytest", "FAILED", "AssertionError", "traceback", "assert"],
+        "top_ocr_contains_any": ["PASSED", "FAILED", "ERROR", "pytest", "assert"]
+      },
+      "exclude": {
+        "keywords_any": ["CI", "batch", "workflow", "--co", "collect"]
+      },
+      "confidence": 0.85,
+      "action": "inject"
+    },
+    {
+      "id": "debug-question",
+      "description": "使用者提問含 debug 語意 + 有 active watcher",
+      "enabled": true,
+      "priority": 8,
+      "match": {
+        "keywords_any": ["為什麼", "為何", "why", "debug", "錯誤", "失敗", "不對", "問題", "issue"]
+      },
+      "require_watcher": true,
+      "confidence": 0.7,
+      "action": "suggest"
+    },
+    {
+      "id": "visual-state-query",
+      "description": "使用者詢問視覺/UI 狀態",
+      "enabled": true,
+      "priority": 9,
+      "match": {
+        "keywords_any": ["畫面", "顯示", "看到", "UI", "視窗", "window", "screen", "show", "display", "visible"]
+      },
+      "confidence": 0.9,
+      "action": "inject"
+    },
+    {
+      "id": "editing-in-progress",
+      "description": "OCR 顯示 edits/accept — 使用者正在審查 code diff（exp-007 結論：需驗證）",
+      "enabled": false,
+      "priority": 5,
+      "source": "exp-007-token-cost",
+      "match": {
+        "top_ocr_contains_any": ["edits", "accept edits", "accept all"]
+      },
+      "confidence": 0.75,
+      "action": "suggest"
+    },
+    {
+      "id": "long-output-suppress",
+      "description": "長輸出（深層 traceback / parametrize）→ 強制 skip（A/B 結論：+77% token 懲罰）",
+      "enabled": true,
+      "priority": 100,
+      "match": {
+        "keywords_any": ["parametrize", "RecursionError", "collected.*items", "passed.*failed.*error"]
+      },
+      "confidence": 1.0,
+      "action": "skip"
+    }
+  ],
+  "default_action": "skip"
+}

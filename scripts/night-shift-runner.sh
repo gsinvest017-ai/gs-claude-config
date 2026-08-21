@@ -27,6 +27,12 @@ exec > >(tee -a "$RUNNER_LOG") 2>&1
 
 log() { printf '[runner %s] %s\n' "$(date +%H:%M:%S)" "$*"; }
 
+# epoch -> 可讀時間。BSD date (macOS) 用 `-r EPOCH`，GNU date (Linux) 用 `-d @EPOCH`。
+# 先試 BSD：GNU 的 -r 是「參考檔案」之意，餵 epoch 會失敗而落到後半段。
+fmt_epoch() {
+    date -r "$1" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -d "@$1" '+%Y-%m-%d %H:%M:%S'
+}
+
 log "starting; log=$RUNNER_LOG"
 
 if [[ ! -f "$TARGETS_CONF" ]]; then
@@ -39,7 +45,7 @@ fi
 
 window_hours="${NIGHT_SHIFT_WINDOW_HOURS:-6}"
 deadline_epoch=$(( $(date +%s) + window_hours * 3600 ))
-log "global window: ${window_hours}h, deadline=$(date -d "@$deadline_epoch" '+%Y-%m-%d %H:%M:%S')"
+log "global window: ${window_hours}h, deadline=$(fmt_epoch "$deadline_epoch")"
 
 # Parse targets.conf into two parallel arrays.
 declare -a t_paths t_prompts

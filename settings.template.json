@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "deny": [
+      "Bash(git push origin main:*)",
+      "Bash(git push origin master:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)"
+    ],
     "additionalDirectories": [
       "__HOME__/gs-zipline-tej",
       "__HOME__/gs-strategy",
@@ -11,6 +18,46 @@
   "model": "opus",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
+  "env": {
+    "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "^/autopilot",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__AUTOPILOT_ARM_CMD__",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__AUTOPILOT_HOOK_CMD__",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -NonInteractive -File \"__HOME__/.claude/hooks/branch-guard.ps1\""
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true
   }

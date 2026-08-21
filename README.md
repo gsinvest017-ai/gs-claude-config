@@ -1,11 +1,26 @@
 # gs-claude-config
 
-Version-controlled `~/.claude/` config — slash commands, skills, global instructions, and settings template. Two paths to onboard a new machine:
+Version-controlled `~/.claude/` config — slash commands, skills, subagents, global instructions, and settings template.
+
+## 👉 Installing this as a toolkit (for other users)
+
+Want the skills / commands / agents / autopilot hooks on your own machine? See **[INSTALL.md](INSTALL.md)**. Two one-click paths:
+
+| Path | How | Best for |
+|------|-----|----------|
+| **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` (+ optional `gs-autopilot@gs-claude-toolkit` for the `/autopilot` hook) | Native, nothing copied into `~/.claude`, base plugin ships zero hooks |
+| **Install script** | `curl -fsSL …/install-toolkit.sh \| bash` · `irm …/install-toolkit.ps1 \| iex` | Universal, copies into `~/.claude`, sets the autopilot block-cap env |
+
+Both are non-destructive: existing same-named items are backed up, `settings.json` is merged (never clobbered), and your own `CLAUDE.md` is never touched. Uninstall with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.
+
+## Contributor onboarding (the author's own machines)
+
+The paths below are for **Kevin's** cross-machine sync — they symlink a personal `CLAUDE.md`, clone a personal sibling fork, and set personal `additionalDirectories`. New users should use INSTALL.md above instead.
 
 | Path | OS | One-liner | Best for |
 |------|----|-----------|----------|
 | **chezmoi** | Windows / macOS / Linux | `chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git` | New colleagues — handles prompts, installs apps, sets fonts |
-| install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | Existing setup, advanced users who want full symlink control |
+| install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | The contributor's full symlink-based sync |
 
 Pick whichever fits — both can coexist on the same machine; only the contributor (Kevin) needs the symlink path.
 
@@ -172,6 +187,23 @@ cd ~/gs-claude-config && git pull
 # nothing else needed — symlinks already point here
 ```
 
+### Health check — `scripts/doctor.py`
+
+Before switching machines (or any time skills seem to be missing on another
+host), run the doctor to catch the sync gaps that bit the 2026-07-01 Mac Studio
+migration — skills stuck on a feature branch, unpushed commits, uncommitted new
+skills, skills absent from `origin/<default>`, and broken sibling-repo symlinks:
+
+```bash
+python scripts/doctor.py            # full report (git fetch first)
+python scripts/doctor.py --no-fetch # offline, cached refs
+python scripts/doctor.py --json     # machine-readable summary
+```
+
+Read-only (never commits/pushes). Cross-platform, stdlib + `git` only. Exit
+code `0` all-clear, `1` warnings, `2` failures — usable as a pre-flight gate.
+If it's all green here, another machine's `git pull` gets **every** skill.
+
 ## What's NOT in here (and why)
 
 The following live under `~/.claude/` but are deliberately excluded:
@@ -285,6 +317,21 @@ scripts/install-cron.sh
 ```
 
 `targets.conf` is `.gitignore`d on purpose — each machine keeps its own list.
+
+## autopilot — 互動 session 內硬性不停
+
+Night Shift 是 **headless 跨-session** 的無人迴圈；`/autopilot` 是它在**互動 session 內**的對應物：靠 `hooks/autopilot-continue.{ps1,sh}` 這支 **Stop hook**，每次 Claude 想結束回合時把它擋回去繼續做，連 yes/no 都不必按，直到任務完成或達續跑上限（預設 50）。
+
+```
+/autopilot on <任務>     # 啟用 + 立即開始，沿用 safe-yolo 的 milestone/commit/進度紀律
+/autopilot status        # 看目前第幾次 / 上限 / 任務
+/autopilot off           # 隨時中止
+```
+
+- skill 定義：`skills/autopilot/SKILL.md`；hook 與安全閥說明：`hooks/README.md`。
+- 預設**關閉**（無旗標檔時 hook 一律放行），且旗標**綁定 session**，不會影響其他視窗。
+- `settings.json` 已把 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` 提到 `60` 以容納 50 次續跑（繞過 Claude Code 內建 8 次硬煞車）。
+- autonomy 三件套：`safe-yolo`（軟 prompt）→ `autopilot`（硬 hook，本機互動）→ `night-shift`（headless 跨-session）。
 
 ## Adding a new slash command or skill
 

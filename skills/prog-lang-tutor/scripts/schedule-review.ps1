@@ -45,9 +45,11 @@ try {
         Write-Host "Removed existing task: $taskName"
     }
 
+    # conhost --headless：藏 console（-WindowStyle Hidden 在 Windows Terminal 為預設終端時擋不住彈窗），
+    # 又不像 wscript run-hidden.vbs 的 SW_HIDE 會連帶把 WinForms 首個表單（測驗視窗本體）一起藏掉。
     $action = New-ScheduledTaskAction `
-        -Execute 'powershell.exe' `
-        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$popupScript`" -RepoSlug `"$RepoSlug`""
+        -Execute 'C:\Windows\System32\conhost.exe' `
+        -Argument "--headless C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$popupScript`" -RepoSlug `"$RepoSlug`""
 
     $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
         -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) `

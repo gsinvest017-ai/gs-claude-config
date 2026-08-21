@@ -16,3 +16,5 @@ scripts/targets.conf
 
 # Per-machine clone-all list (each PC fills in its own repo URLs / dests)
 scripts/repos.txt
+__pycache__/
+*.pyc
