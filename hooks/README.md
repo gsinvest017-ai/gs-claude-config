@@ -153,3 +153,37 @@ spawn pwsh，省下每次 prompt 約 340ms 的啟動成本；沒有這道守門�
 # 有編號 → 回 hookSpecificOutput.additionalContext
 '{"prompt":"KAN-443 怎樣"}' | pwsh -NoProfile -NonInteractive -File hooks\kan-context.ps1
 ```
+
+## context-inject.ps1 / context-inject.sh — SessionStart 注入專案 context
+
+把 `gs-harness` 預渲染好的跨 repo context 注入每個新 session（報告 B4 的
+benevolent prompt injection）：workspace、最近驗證結果與其資料年紀、roadmap
+翻紅預警、未完成 backlog、learnings 索引、artifact 到位狀況。
+
+**這支腳本刻意什麼邏輯都不做**——只讀 `$GS_HARNESS_ROOT/state/context-agent.md`
+再算它多舊。SessionStart 是**同步阻塞 session 開場**的，跑多久使用者就乾等多久；
+跨 repo 全掃要 20 秒，所以採集與 render 都在 `harness context --refresh`（nightly
+loop）時做完。實測 Windows 353 ms。
+
+- `matcher: "startup|clear|compact"` — 刻意排除 `resume` / `fork`：那兩種情況上一輪
+  transcript 裡已經有同一份 context，再注入是純重複付費。
+- cache 不存在或是空檔 → **安靜跳過**。注入空內容會讓 agent 把「有這個區塊但裡面
+  沒東西」讀成「沒事」。
+- cache 超過 3 天 → **照樣注入但標出天數**。舊 context 仍遠勝於沒有 context。
+- 兩份（`.ps1` / `.sh`）契約相同、必須同時維護。只改一份的話另一個平台會靜默地
+  拿到舊行為——hook 的失敗一律是靜默的。
+
+測試：`pwsh -File tests/test-context-inject.ps1`（11 個案例）。
+
+## branch-guard.ps1 — PreToolUse 受保護分支硬閘門
+
+擋掉推向 `main` / `master` 的 push、force push、`--mirror`、刪除受保護分支。
+用 token 解析而非正則，所以 `main-experiment`、`feature/main` 這類名字裡剛好含
+main 的分支不會被誤擋；並會先剝掉 heredoc 內文（commit message 引用 git 指令
+不該被當成要執行）。逃生門：指令尾端加 `#allow-protected-push`。
+
+測試：`pwsh -File tests/test-branch-guard.ps1`（38 個案例）。
+
+> ⚠️ **目前只有 PowerShell 版。** `install.sh` 在 POSIX 平台會**剝掉**這個 hook
+> 而不是註冊一個指向 `.ps1` 的死指令——註冊一個永遠跑不起來的 hook 是假綠燈，
+> 比沒有更糟。POSIX 版待補（見 gs-harness `BACKLOG.md`）。

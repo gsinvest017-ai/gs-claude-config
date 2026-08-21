@@ -52,18 +52,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -NonInteractive -File \"__HOME__/.claude/hooks/branch-guard.ps1\""
+            "command": "__BRANCH_GUARD_CMD__"
           }
         ]
       }
     ],
     "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "startup|clear|compact",
         "hooks": [
           {
             "type": "command",
-            "command": "pwsh -NoProfile -NonInteractive -File \"__HOME__/.claude/hooks/context-inject.ps1\""
+            "command": "__CONTEXT_HOOK_CMD__",
+            "timeout": 5
           }
         ]
       }
