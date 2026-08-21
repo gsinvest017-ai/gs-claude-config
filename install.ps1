@@ -91,7 +91,9 @@ $HooksDir = Join-Path $ClaudeDir 'hooks'
 if (-not (Test-Path $HooksDir)) { New-Item -ItemType Directory -Path $HooksDir | Out-Null }
 Copy-Item (Join-Path $RepoDir 'hooks\autopilot-continue.ps1') (Join-Path $HooksDir 'autopilot-continue.ps1') -Force
 Copy-Item (Join-Path $RepoDir 'hooks\autopilot-arm.ps1')      (Join-Path $HooksDir 'autopilot-arm.ps1') -Force
-Write-Host '  copied autopilot-continue.ps1, autopilot-arm.ps1'
+Copy-Item (Join-Path $RepoDir 'hooks\context-inject.ps1')     (Join-Path $HooksDir 'context-inject.ps1') -Force
+Copy-Item (Join-Path $RepoDir 'hooks\branch-guard.ps1')       (Join-Path $HooksDir 'branch-guard.ps1') -Force
+Write-Host '  copied autopilot-continue.ps1, autopilot-arm.ps1, context-inject.ps1, branch-guard.ps1'
 
 Write-Host '==> settings.json'
 $SettingsTarget = Join-Path $ClaudeDir 'settings.json'
@@ -104,6 +106,8 @@ function ConvertTo-JsonCmd([string]$p) {
 }
 $AutopilotCmdJson = ConvertTo-JsonCmd (Join-Path $HooksDir 'autopilot-continue.ps1')
 $AutopilotArmJson = ConvertTo-JsonCmd (Join-Path $HooksDir 'autopilot-arm.ps1')
+$ContextHookJson  = ConvertTo-JsonCmd (Join-Path $HooksDir 'context-inject.ps1')
+$BranchGuardJson  = ConvertTo-JsonCmd (Join-Path $HooksDir 'branch-guard.ps1')
 if (Test-Path $SettingsTarget) {
     Write-Host '  exists already - left untouched. Diff against settings.template.json manually if you want to merge new keys.'
     Write-Host '  (autopilot Stop + UserPromptSubmit hooks + CLAUDE_CODE_STOP_HOOK_BLOCK_CAP must be merged by hand — see hooks/README.md)'
@@ -112,6 +116,8 @@ if (Test-Path $SettingsTarget) {
     $rendered = $template -replace '__HOME__', $env:USERPROFILE.Replace('\', '/')
     $rendered = $rendered.Replace('__AUTOPILOT_HOOK_CMD__', $AutopilotCmdJson)
     $rendered = $rendered.Replace('__AUTOPILOT_ARM_CMD__', $AutopilotArmJson)
+    $rendered = $rendered.Replace('__CONTEXT_HOOK_CMD__', $ContextHookJson)
+    $rendered = $rendered.Replace('__BRANCH_GUARD_CMD__', $BranchGuardJson)
     Set-Content -Path $SettingsTarget -Value $rendered -Encoding UTF8 -NoNewline
     Write-Host "  rendered settings.template.json -> $SettingsTarget"
 }
