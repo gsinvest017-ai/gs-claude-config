@@ -45,6 +45,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -NonInteractive -File \"__HOME__/.claude/hooks/branch-guard.ps1\""
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
