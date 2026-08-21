@@ -1,6 +1,6 @@
 {
   "name": "gs-claude-toolkit",
-  "description": "39 skills, 20 slash commands, and 5 subagents for Claude Code. Auto-discovers commands/, skills/, agents/ from the repo root. Ships ZERO hooks — install the separate gs-autopilot plugin if you want the /autopilot Stop-hook.",
+  "description": "42 skills, 20 slash commands, and 5 subagents for Claude Code. Auto-discovers commands/, skills/, agents/ from the repo root. Ships ZERO hooks — install the separate gs-autopilot plugin if you want the /autopilot Stop-hook.",
   "version": "1.0.0",
   "author": {
     "name": "Kevin",

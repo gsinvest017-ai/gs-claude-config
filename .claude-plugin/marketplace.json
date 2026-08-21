@@ -5,14 +5,14 @@
     "email": "gsinvest017@gsinvest.com.tw"
   },
   "metadata": {
-    "description": "gs-claude-config as one-click Claude Code plugins: a hook-free toolkit of 39 skills, 20 slash commands, and 5 subagents, plus an optional autopilot hook you install separately.",
+    "description": "gs-claude-config as one-click Claude Code plugins: a hook-free toolkit of 42 skills, 20 slash commands, and 5 subagents, plus an optional autopilot hook you install separately.",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "gs-claude-toolkit",
       "source": "./",
-      "description": "39 skills (safe-yolo, survey-first, repo-scan, daily-summary, git-tag, quant-researcher, blender-physics-lint, and 30+ more), 20 slash commands, and 5 subagents. Ships ZERO hooks — fully passive, nothing fires on your sessions.",
+      "description": "42 skills (safe-yolo, survey-first, repo-scan, daily-summary, git-tag, quant-researcher, blender-physics-lint, and 35 more), 20 slash commands, and 5 subagents. Ships ZERO hooks — fully passive, nothing fires on your sessions.",
       "version": "1.0.0",
       "author": { "name": "Kevin" },
       "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",

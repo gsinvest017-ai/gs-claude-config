@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "deny": [
+      "Bash(git push origin main:*)",
+      "Bash(git push origin master:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)"
+    ],
     "additionalDirectories": [
       "__HOME__/gs-zipline-tej",
       "__HOME__/gs-strategy",

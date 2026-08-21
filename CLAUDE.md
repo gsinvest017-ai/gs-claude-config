@@ -33,11 +33,11 @@ Path: `C:\Users\User\gs-repo-atlas`（Windows-native，掃描涵蓋 Windows + WS
 
 ## gs-zipline-tej
 
-Path: `/home/kevin/gs-zipline-tej`
+Path: `C:\Users\User\gs-zipline-tej`
 A Zipline fork integrated with TEJ (Taiwan Economic Journal) data for Taiwan-market backtesting.
 
 Entry doc:
-@/home/kevin/gs-zipline-tej/README.md
+@C:\Users\User\gs-zipline-tej\README.md
 
 Other key files (read on demand):
 - `simple_run.md` / `simple_run_zw.md` — quick-start guides (EN / 中文)
@@ -49,11 +49,11 @@ Other key files (read on demand):
 
 ## gs-auto-fix
 
-Path: `/home/kevin/gs-auto-fix`
+Path: `C:\Users\User\gs-auto-fix`
 GitHub Actions 自動化流水線：CI 失敗 → 自動開 issue → Claude 修復並開 PR → Claude review → auto-merge。四段式無人介入 loop。
 
 Entry doc:
-@/home/kevin/gs-auto-fix/README.md
+@C:\Users\User\gs-auto-fix\README.md
 
 Other key files (read on demand):
 - `.github/workflows/ci.yml` — pytest + 失敗時 open-issue-on-failure
@@ -64,11 +64,11 @@ Other key files (read on demand):
 
 ## gs-strategy
 
-Path: `/home/kevin/gs-strategy`
+Path: `/home/kevin/gs-strategy`（**僅 WSL**，Windows 端沒有 clone）
 雙用途 repo：(1) `quant_crawler/` — 期貨/量化研究論文爬蟲（arXiv q-fin、NBER、RePEc NEP、FED FEDS、Wiley JFM、AQR），SQLite 去重 + relevance filter；(2) `strategies/` — 從爬到的論文挑出 4 支可在台灣期貨市場執行的策略（vgrsi_tx、cubic_momentum_tx、tsmom_tx_mtx、xsmom_stkfut_rmt），目標跑在 zipline-tej 的 `tquant_future` bundle。同時作為 Claude Code YOLO (bypassPermissions) 模式的 sandbox。
 
-Entry doc:
-@/home/kevin/gs-strategy/README.md
+Entry doc（WSL-only，**未自動注入**，Windows session 需自行從 WSL 讀）：
+`/home/kevin/gs-strategy/README.md`
 
 Other key files (read on demand):
 - `strategies/README.md` — 4 支策略一覽（標的、訊號類型、論文出處）與 `_common/runner` 執行流程
@@ -83,11 +83,11 @@ Other key files (read on demand):
 
 ## quant-research-skill
 
-Path: `/home/kevin/quant-research-skill`
+Path: `C:\Users\User\quant-research-skill`
 Claude Code skill pack：`/quant-researcher`（四階段策略產生：理論 → 文獻 → 回測 → 中文報告）與 `/review-strategy`（Jane Street 等級五階段審查，輸出 PASS/CONDITIONAL/FAIL 判定）。
 
 Entry doc:
-@/home/kevin/quant-research-skill/README.md
+@C:\Users\User\quant-research-skill\README.md
 
 Other key files (read on demand):
 - `skills/quant-researcher/SKILL.md` — 四階段研究 pipeline 完整 prompt
@@ -116,11 +116,11 @@ Other key files (read on demand):
 
 ## tutorial
 
-Path: `/home/kevin/tutorial`
+Path: `C:\Users\User\tutorial`
 量化策略研究員 / 量化開發工程師 onboarding 知識庫。四大模組：策略驗證術語、台灣半導體供應鏈、系統架構、Harness Engineering。
 
 Entry doc:
-@/home/kevin/tutorial/README.md
+@C:\Users\User\tutorial\README.md
 
 Other key files (read on demand):
 - `strategy/strategy-validation-terms.md` — 中英對照術語表（bps、Walk-Forward、IS/OOS Sharpe、Bonferroni、ADX 等）

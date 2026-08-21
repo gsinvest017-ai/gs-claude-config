@@ -22,7 +22,7 @@ bit (a hook) is opt-in:
 
 | Plugin | Contains | Hook footprint |
 |--------|----------|----------------|
-| `gs-claude-toolkit` | 39 skills, 20 commands, 5 agents | **none** — fully passive |
+| `gs-claude-toolkit` | 42 skills, 20 commands, 5 agents | **none** — fully passive |
 | `gs-autopilot` | the `/autopilot` Stop-hook | registers a Stop hook that runs each turn-end |
 
 Inside a Claude Code session:
@@ -145,7 +145,7 @@ backups under `~/.claude/backups/` are left in place.
 
 - **A. Claude Code plugin（推薦、最一鍵）**：marketplace 提供**兩個** plugin，把有
   侵入性的 hook 拆成 opt-in：
-  - `gs-claude-toolkit` — 39 skills / 20 commands / 5 agents，**零 hook**（完全被動）
+  - `gs-claude-toolkit` — 42 skills / 20 commands / 5 agents，**零 hook**（完全被動）
   - `gs-autopilot` — `/autopilot` 的 Stop hook，**想要才裝**
   ```
   /plugin marketplace add gsinvest017-ai/gs-claude-config
