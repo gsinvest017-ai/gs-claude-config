@@ -81,6 +81,31 @@ Note the SessionStart matcher is `startup|clear|compact` on purpose — `resume`
 and `fork` already carry the same context in the previous transcript, so
 re-injecting there is pure duplicate spend.
 
+### Do not run Option A's `gs-meta-harness` and Option B side by side
+
+Option B's `install.ps1` registers `branch-guard.ps1` and `context-inject.ps1`
+directly in your `~/.claude/settings.json`. The `gs-meta-harness` plugin
+registers the **same two hooks** again, as `.mjs`. Claude Code runs both:
+
+- `branch-guard` — fires twice. Safe (both fail closed, a deny still denies),
+  but you get the block message twice.
+- `context-inject` — **injects the identical context block twice on every
+  session start**. That is duplicate tokens you pay for, every session, forever.
+
+Pick one. Check what is currently registered:
+
+```powershell
+node -e "const h=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude/settings.json','utf8')).hooks||{};for(const[e,a]of Object.entries(h))for(const g of a)for(const x of g.hooks||[])if(/branch-guard|context-inject/.test(x.command))console.log(e,x.command)"
+```
+
+Any line printed means the script-installed copy is live, so **do not** install
+`gs-meta-harness`. To switch to the plugin, delete those two entries from
+`~/.claude/settings.json` by hand first — `install.ps1` has no uninstall flag,
+and `uninstall-toolkit.ps1` only removes the autopilot hook, not these two.
+
+Everything else coexists fine — Option B's skills/commands and the passive
+`gs-claude-toolkit` plugin do not overlap.
+
 ### Testing this release safely (for you or a tester)
 
 Test the plugin **without touching your real `~/.claude`**, pick one:
@@ -212,5 +237,28 @@ backups under `~/.claude/backups/` are left in place.
     `~/.claude/`，並把 autopilot hook **安全併入** `settings.json`（不覆蓋你既有設定、
     不裝 `CLAUDE.md`）。同名項目先備份到 `~/.claude/backups/`。
   - 解除安裝：`./uninstall-toolkit.sh`（或 `.\uninstall-toolkit.ps1`）。
+
+### 不要同時用 A 的 `gs-meta-harness` 與 B
+
+B 的 `install.ps1` 會把 `branch-guard.ps1` 與 `context-inject.ps1` 直接寫進你的
+`~/.claude/settings.json`；`gs-meta-harness` plugin 註冊的是**同樣這兩支 hook**
+的 `.mjs` 版。Claude Code 會兩份都跑：
+
+- `branch-guard` — 觸發兩次。安全（兩邊都 fail-closed，擋還是擋），但阻擋訊息會出現兩次。
+- `context-inject` — **每次 session 啟動重複注入同一段 context**。那是每個 session
+  都在重複付費的 token，而且會一直付下去。
+
+**擇一即可。** 先查目前註冊了什麼：
+
+```powershell
+node -e "const h=JSON.parse(require('fs').readFileSync(process.env.USERPROFILE+'/.claude/settings.json','utf8')).hooks||{};for(const[e,a]of Object.entries(h))for(const g of a)for(const x of g.hooks||[])if(/branch-guard|context-inject/.test(x.command))console.log(e,x.command)"
+```
+
+有印出任何一行，就代表腳本版已經生效，**不要**再裝 `gs-meta-harness`。
+想改用 plugin，得先自己把那兩個項目從 `~/.claude/settings.json` 刪掉——
+`install.ps1` 沒有解除安裝旗標，而 `uninstall-toolkit.ps1` 只移除 autopilot hook，
+不含這兩支。
+
+其餘部分並存沒問題——B 的 skills/commands 與被動的 `gs-claude-toolkit` plugin 不重疊。
 
 需求：`git` 與 `node`（Claude Code 已內建）。不需要 `jq`、不需要管理員權限。
