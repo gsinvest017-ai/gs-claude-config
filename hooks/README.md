@@ -170,10 +170,12 @@ loop）時做完。實測 Windows 353 ms。
 - cache 不存在或是空檔 → **安靜跳過**。注入空內容會讓 agent 把「有這個區塊但裡面
   沒東西」讀成「沒事」。
 - cache 超過 3 天 → **照樣注入但標出天數**。舊 context 仍遠勝於沒有 context。
-- 兩份（`.ps1` / `.sh`）契約相同、必須同時維護。只改一份的話另一個平台會靜默地
-  拿到舊行為——hook 的失敗一律是靜默的。
+- **三份**（`.ps1` / `.sh` / `.mjs`）契約相同、必須同時維護。詳見下方「同一支 hook
+  的三種形式」。
 
-測試：`pwsh -File tests/test-context-inject.ps1`（11 個案例）。
+測試：
+- `pwsh -File tests/test-context-inject.ps1`（11 個案例，測 `.ps1`）
+- `node --test "plugins/gs-meta-harness/hooks/context-inject.test.mjs"`（12 個案例，測 `.mjs`）
 
 ## branch-guard.ps1 — PreToolUse 受保護分支硬閘門
 
@@ -182,8 +184,41 @@ loop）時做完。實測 Windows 353 ms。
 main 的分支不會被誤擋；並會先剝掉 heredoc 內文（commit message 引用 git 指令
 不該被當成要執行）。逃生門：指令尾端加 `#allow-protected-push`。
 
-測試：`pwsh -File tests/test-branch-guard.ps1`（38 個案例）。
+測試：
+- `pwsh -File tests/test-branch-guard.ps1`（38 個案例，測 `.ps1`）
+- `node --test "plugins/gs-meta-harness/hooks/branch-guard.test.mjs"`（50 個案例，測 `.mjs`；
+  38 個逐條移植自上面那份，另 12 個是移植時補的邊界案例）
 
-> ⚠️ **目前只有 PowerShell 版。** `install.sh` 在 POSIX 平台會**剝掉**這個 hook
-> 而不是註冊一個指向 `.ps1` 的死指令——註冊一個永遠跑不起來的 hook 是假綠燈，
-> 比沒有更糟。POSIX 版待補（見 gs-harness `BACKLOG.md`）。
+> ⚠️ **仍然沒有 `.sh` 版。** `install.sh` 在 POSIX 平台會**剝掉**這個 hook 而不是
+> 註冊一個指向 `.ps1` 的死指令——註冊一個永遠跑不起來的 hook 是假綠燈，比沒有更糟。
+> POSIX 平台現在的解法是**改裝 plugin**（`gs-meta-harness`，走 `.mjs`），
+> 不再等 `.sh`。
+
+---
+
+## 同一支 hook 的三種形式（`.ps1` / `.sh` / `.mjs`）
+
+`context-inject` 與 `branch-guard` 各有多份實作，載體不同、契約相同：
+
+| Hook | `.ps1` | `.sh` | `.mjs`（plugin） |
+|------|--------|-------|------------------|
+| `context-inject` | `hooks/context-inject.ps1` | `hooks/context-inject.sh` | `plugins/gs-meta-harness/hooks/context-inject.mjs` |
+| `branch-guard` | `hooks/branch-guard.ps1` | *（無，POSIX 請改裝 plugin）* | `plugins/gs-meta-harness/hooks/branch-guard.mjs` |
+
+- `.ps1` / `.sh` 走 **`install.ps1` / `install.sh`**（原作者的跨機器同步路徑，
+  逐檔複製到 `~/.claude/hooks/` 並改 `settings.json`）。
+- `.mjs` 走 **Claude Code plugin**（`plugins/gs-meta-harness/`，由該目錄的
+  `hooks/hooks.json` 註冊，指令一律寫成
+  `node "${CLAUDE_PLUGIN_ROOT}/hooks/<name>.mjs"`，不 hardcode 路徑）。
+  選 Node 是因為 Node **隨 Claude Code 附帶**，Windows / macOS / Linux 同一份檔就能跑，
+  使用者不必額外裝 pwsh 或 jq。
+
+> ⚠️ **三份必須同時維護。** 只改一份的話，其他平台的使用者會**靜默地拿到舊行為**——
+> 不會噴錯、不會有警告，因為 hook 的失敗一律是靜默的（那正是這整套稽核在對付的
+> 「假綠燈」）。改任何一份的判定邏輯之前，先確認另外兩份要不要跟著改；改完三份的
+> 測試都要跑過（上面各節列的指令）。
+
+**已知的實作漂移**（移植 `.mjs` 時發現，尚未收斂，先留痕）：
+`context-inject` 的「過期幾天」格式，`.ps1` 用 `"{0:N0}"`（.NET banker's rounding，
+且 ≥1000 會加千分位逗號），`.sh` 用整數 floor 除法。同一份放了 3.6 天的 context，
+`.ps1` 說「已 4 天」、`.sh` 說「已 3 天」。`.mjs` 目前對齊 `.ps1`。

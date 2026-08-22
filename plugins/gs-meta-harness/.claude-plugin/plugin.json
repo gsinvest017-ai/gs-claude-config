@@ -1,0 +1,13 @@
+{
+  "name": "gs-meta-harness",
+  "description": "Two cross-platform Node hooks from the gs-harness meta-loop, packaged for opt-in install. (1) branch-guard — a PreToolUse hard gate that blocks pushes to main/master, force pushes, --mirror, and protected-branch deletions across BOTH the Bash and PowerShell tools, and keeps working under permission_mode=bypassPermissions where allow/ask/deny rules are skipped entirely; token-based parsing so main-experiment and feature/main are not false-flagged, heredoc bodies are stripped, escape hatch is a trailing #allow-protected-push. Needs NO external dependency — install it and it is live. (2) context-inject — a SessionStart hook that injects the pre-rendered cross-repo context that gs-harness writes to $GS_HARNESS_ROOT/state/context-agent.md (default ~/gs-harness). This one needs gs-harness on the machine; WITHOUT it the hook finds no cache, prints nothing and exits 0 — silently skipped, never an error, and branch-guard is unaffected. Like gs-autopilot this plugin REGISTERS HOOKS, so it is installed separately from the hook-free gs-claude-toolkit base plugin.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Kevin",
+    "email": "gsinvest017@gsinvest.com.tw"
+  },
+  "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+  "repository": "https://github.com/gsinvest017-ai/gs-claude-config",
+  "license": "MIT",
+  "keywords": ["hooks", "branch-protection", "context-injection", "gs-harness", "safety"]
+}

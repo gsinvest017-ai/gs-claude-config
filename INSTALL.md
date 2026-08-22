@@ -24,6 +24,7 @@ bit (a hook) is opt-in:
 |--------|----------|----------------|
 | `gs-claude-toolkit` | 42 skills, 20 commands, 5 agents | **none** — fully passive |
 | `gs-autopilot` | the `/autopilot` Stop-hook | registers a Stop hook that runs each turn-end |
+| `gs-meta-harness` | `branch-guard` + `context-inject` (Node) | registers a PreToolUse hook (`Bash`/`PowerShell`) and a SessionStart hook |
 
 Inside a Claude Code session:
 
@@ -31,6 +32,7 @@ Inside a Claude Code session:
 /plugin marketplace add gsinvest017-ai/gs-claude-config
 /plugin install gs-claude-toolkit@gs-claude-toolkit      # skills/commands/agents, zero hooks
 /plugin install gs-autopilot@gs-claude-toolkit           # OPTIONAL — only if you want /autopilot
+/plugin install gs-meta-harness@gs-claude-toolkit         # OPTIONAL — protected-branch guard + gs-harness context
 ```
 
 Or run `/plugin`, pick **Browse marketplaces → gs-claude-toolkit**, and install
@@ -52,6 +54,32 @@ so `/autopilot` continuations are capped at Claude Code's built-in limit. For
 the full 50-round autopilot, either add `"env": {
 "CLAUDE_CODE_STOP_HOOK_BLOCK_CAP": "60" }` to your `settings.json`, or use
 Option B (which sets it for you).
+
+### gs-meta-harness — what it does on a machine with no gs-harness
+
+The plugin bundles two independent hooks, and only one of them has an external
+dependency:
+
+| Hook | Event | Needs `gs-harness`? | With no `gs-harness` |
+|------|-------|---------------------|----------------------|
+| `branch-guard.mjs` | `PreToolUse` (`Bash`, `PowerShell`) | **no** | works exactly the same — installed means live |
+| `context-inject.mjs` | `SessionStart` (`startup\|clear\|compact`) | yes | **silently skips** — no output, exit 0, no error, no delay |
+
+`context-inject` reads one pre-rendered file, `$GS_HARNESS_ROOT/state/context-agent.md`
+(defaulting to `~/gs-harness/state/context-agent.md` when `GS_HARNESS_ROOT` is
+unset). If that file is missing, empty, or unreadable, the hook prints **nothing**
+and exits 0 — Claude Code treats a hook with no stdout as "nothing to inject" and
+carries on. So installing `gs-meta-harness` without `gs-harness` is safe and
+useful: you get the branch-protection gate, and the context hook stays dormant
+until the day `gs-harness` shows up. Point it at a non-default checkout with:
+
+```bash
+export GS_HARNESS_ROOT=/path/to/gs-harness      # PowerShell: $env:GS_HARNESS_ROOT = 'C:\path\to\gs-harness'
+```
+
+Note the SessionStart matcher is `startup|clear|compact` on purpose — `resume`
+and `fork` already carry the same context in the previous transcript, so
+re-injecting there is pure duplicate spend.
 
 ### Testing this release safely (for you or a tester)
 
@@ -147,10 +175,13 @@ backups under `~/.claude/backups/` are left in place.
   侵入性的 hook 拆成 opt-in：
   - `gs-claude-toolkit` — 42 skills / 20 commands / 5 agents，**零 hook**（完全被動）
   - `gs-autopilot` — `/autopilot` 的 Stop hook，**想要才裝**
+  - `gs-meta-harness` — `branch-guard`（PreToolUse 受保護分支硬閘門）＋
+    `context-inject`（SessionStart 跨 repo context 注入），兩支都是跨平台 Node，**想要才裝**
   ```
   /plugin marketplace add gsinvest017-ai/gs-claude-config
   /plugin install gs-claude-toolkit@gs-claude-toolkit   # 零 hook
   /plugin install gs-autopilot@gs-claude-toolkit        # 選用
+  /plugin install gs-meta-harness@gs-claude-toolkit     # 選用
   ```
   plugin 檔案進 `~/.claude/plugins/`，**不動**你的 `~/.claude/skills` 與
   `settings.json`；command 有命名空間（`/gs-claude-toolkit:*`）不會衝突。移除：
@@ -159,6 +190,20 @@ backups under `~/.claude/backups/` are left in place.
   要跑滿 50 次請自行加該 env 或改用 B。
   **測試 release**：用 `claude --plugin-dir <本地 checkout>` 或乾淨的
   `CLAUDE_CONFIG_DIR=/tmp/cc-test claude` 測，真實 `~/.claude` 完全不碰。
+
+  **裝了 `gs-meta-harness` 但機器上沒有 `gs-harness` 會怎樣？**
+  兩支 hook 互相獨立，只有一支有外部依賴：
+  - `branch-guard`（PreToolUse，matcher `Bash|PowerShell`）— **不需要任何外部依賴**，
+    裝了就生效。擋 push 到 `main`/`master`、force push、`--mirror`、刪受保護分支；
+    在 `bypassPermissions` 下照樣執行（permissions 的 deny 規則在那個模式會被整個繞過）。
+  - `context-inject`（SessionStart，matcher `startup|clear|compact`）— 只讀
+    `$GS_HARNESS_ROOT/state/context-agent.md`（未設 `GS_HARNESS_ROOT` 時退回
+    `~/gs-harness/state/context-agent.md`）。檔案不存在／是空檔／讀不到 →
+    **安靜跳過**：不印任何東西、exit 0、不報錯、不拖慢開場。
+
+  所以沒有 `gs-harness` 也可以安心裝：你拿到分支保護閘門，context 那支就一直休眠，
+  等哪天真的 clone 了 `gs-harness` 才會開始注入。checkout 不在預設位置就設
+  `GS_HARNESS_ROOT`（PowerShell：`$env:GS_HARNESS_ROOT = 'C:\path\to\gs-harness'`）。
 
 - **B. 安裝腳本（通用、遠端一行）**：
   - macOS/Linux/WSL：`curl -fsSL .../install-toolkit.sh | bash`
