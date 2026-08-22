@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-25
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # Progress — cc-insights skill
 
 ## 目標

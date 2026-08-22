@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-07-31
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # progress — /autopilot 迴圈核心壓測
 
 ## 目標

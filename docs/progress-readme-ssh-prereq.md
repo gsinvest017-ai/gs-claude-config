@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-18
+repos: [gs-claude-config]
+owner: GSINVEST-Kevin
+---
+
 # Progress — README SSH key prerequisite for clone-all.sh
 
 Started: 2026-05-18

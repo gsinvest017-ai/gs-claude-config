@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-06-04
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # /update-doc Skill 建立 + 首次執行進度
 
 ## 目標

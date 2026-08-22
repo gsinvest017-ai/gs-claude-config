@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-27
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # 進度：新增 /one-button-launch 與 /platform-compatible 兩個全域 slash command
 
 ## 目標

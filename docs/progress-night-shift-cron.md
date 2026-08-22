@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-12
+repos: [gs-claude-config]
+owner: gsinvest017-kevin
+---
+
 # Progress — Night-Shift Cron
 
 > Branch: `feat/night-shift-cron`

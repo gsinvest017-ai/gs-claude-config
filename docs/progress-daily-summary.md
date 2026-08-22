@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-21
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # progress — /daily-summary slash command
 
 ## 目標
