@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-06-01
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # 進度：撰寫「commit message 用繁體中文寫」spec
 
 ## 目標

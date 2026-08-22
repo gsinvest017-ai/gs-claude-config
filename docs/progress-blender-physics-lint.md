@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-07-04
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # progress — blender-physics-lint 全域 skill
 
 ## 目標

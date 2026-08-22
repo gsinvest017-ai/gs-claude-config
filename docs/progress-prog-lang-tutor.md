@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-26
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # progress — /prog-lang-tutor
 
 ## 目標

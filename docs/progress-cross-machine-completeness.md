@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-15
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # Progress — Cross-machine migration completeness
 
 Started: 2026-05-15

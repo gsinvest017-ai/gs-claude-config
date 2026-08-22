@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-07-08
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # 進度：一鍵安裝 — 給其他使用者的 gs-claude-toolkit 分發
 
 ## 目標

@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-26
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # progress-cheatsheet-feature.md
 
 > Track for: 替 `/prog-lang-tutor` 加 `cheatsheet` 功能，把 repo 的知識銀行匯整成

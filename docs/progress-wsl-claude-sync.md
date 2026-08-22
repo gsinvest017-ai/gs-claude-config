@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-28
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # 進度：WSL 端套用 Method 1（symlink 到 Windows 端），再評估 Method 3
 
 ## 目標

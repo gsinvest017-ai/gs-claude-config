@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-29
+repos: [gs-claude-config]
+owner: Kevin (gsinvest017)
+---
+
 # 進度：新增 /test-plan 全域 slash command
 
 ## 目標

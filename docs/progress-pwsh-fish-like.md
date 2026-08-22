@@ -1,3 +1,10 @@
+---
+type: progress
+updated: 2026-05-14
+repos: [gs-claude-config]
+owner: gsinvest017-kevin
+---
+
 # Progress — PowerShell fish-like 體驗 + 終端機美化
 
 ## 目標
