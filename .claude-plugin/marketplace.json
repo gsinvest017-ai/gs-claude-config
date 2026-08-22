@@ -5,7 +5,7 @@
     "email": "gsinvest017@gsinvest.com.tw"
   },
   "metadata": {
-    "description": "gs-claude-config as one-click Claude Code plugins: a hook-free toolkit of 42 skills, 20 slash commands, and 5 subagents, plus an optional autopilot hook you install separately.",
+    "description": "gs-claude-config as one-click Claude Code plugins: a hook-free toolkit of 42 skills, 20 slash commands, and 5 subagents, plus two optional hook plugins (autopilot, meta-harness) you install separately.",
     "version": "1.0.0"
   },
   "plugins": [
@@ -26,6 +26,15 @@
       "author": { "name": "Kevin" },
       "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
       "keywords": ["hooks", "autopilot", "automation"]
+    },
+    {
+      "name": "gs-meta-harness",
+      "source": "./plugins/gs-meta-harness",
+      "description": "Optional safety + context hooks from the gs-harness meta-loop. branch-guard: a PreToolUse hard gate blocking pushes to main/master, force pushes, --mirror and protected-branch deletion on BOTH the Bash and PowerShell tools, still enforced under bypassPermissions where deny rules are skipped; needs no external dependency, live the moment you install it. context-inject: a SessionStart hook injecting the cross-repo context gs-harness pre-renders — needs gs-harness on the machine, and without it the hook silently prints nothing and exits 0. Install ONLY if you want these hooks; the base gs-claude-toolkit plugin stays hook-free. Cross-platform Node, no jq, no pwsh.",
+      "version": "1.0.0",
+      "author": { "name": "Kevin" },
+      "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+      "keywords": ["hooks", "branch-protection", "context-injection", "gs-harness", "safety"]
     }
   ]
 }
