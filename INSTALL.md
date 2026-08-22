@@ -29,7 +29,7 @@ bit (a hook) is opt-in:
 Inside a Claude Code session:
 
 ```
-/plugin marketplace add gsinvest017-ai/gs-claude-config
+/plugin marketplace add GSINVEST/gs-claude-config
 /plugin install gs-claude-toolkit@gs-claude-toolkit      # skills/commands/agents, zero hooks
 /plugin install gs-autopilot@gs-claude-toolkit           # OPTIONAL — only if you want /autopilot
 /plugin install gs-meta-harness@gs-claude-toolkit         # OPTIONAL — protected-branch guard + gs-harness context
@@ -116,7 +116,7 @@ claude --plugin-dir /path/to/gs-claude-config
 
 # 2. Or a throwaway config dir (may prompt for login the first time):
 CLAUDE_CONFIG_DIR=/tmp/cc-test claude
-#   then inside:  /plugin marketplace add gsinvest017-ai/gs-claude-config  → install → test
+#   then inside:  /plugin marketplace add GSINVEST/gs-claude-config  → install → test
 #   cleanup:      rm -rf /tmp/cc-test
 ```
 
@@ -135,19 +135,19 @@ require the plugin system.
 **macOS / Linux / WSL:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.sh | bash
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-irm https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.ps1 | iex
+irm https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.ps1 | iex
 ```
 
 Or clone first and run locally with flags:
 
 ```bash
-git clone https://github.com/gsinvest017-ai/gs-claude-config.git
+git clone https://github.com/GSINVEST/gs-claude-config.git
 cd gs-claude-config
 ./install-toolkit.sh              # or:  .\install-toolkit.ps1
 ```
@@ -177,7 +177,7 @@ cd gs-claude-config
 Passing flags over the pipe on Windows:
 
 ```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.ps1))) -NoHooks
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.ps1))) -NoHooks
 ```
 
 ### Uninstall
@@ -203,7 +203,7 @@ backups under `~/.claude/backups/` are left in place.
   - `gs-meta-harness` — `branch-guard`（PreToolUse 受保護分支硬閘門）＋
     `context-inject`（SessionStart 跨 repo context 注入），兩支都是跨平台 Node，**想要才裝**
   ```
-  /plugin marketplace add gsinvest017-ai/gs-claude-config
+  /plugin marketplace add GSINVEST/gs-claude-config
   /plugin install gs-claude-toolkit@gs-claude-toolkit   # 零 hook
   /plugin install gs-autopilot@gs-claude-toolkit        # 選用
   /plugin install gs-meta-harness@gs-claude-toolkit     # 選用

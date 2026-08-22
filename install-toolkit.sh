@@ -7,7 +7,7 @@
 # separate install.sh, which symlinks the author's personal CLAUDE.md etc.).
 #
 # Remote one-liner:
-#   curl -fsSL https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.sh | bash
 #
 # From a local clone:
 #   ./install-toolkit.sh [flags]
@@ -28,7 +28,7 @@
 
 set -euo pipefail
 
-REPO_URL="${GS_REPO_URL:-https://github.com/gsinvest017-ai/gs-claude-config.git}"
+REPO_URL="${GS_REPO_URL:-https://github.com/GSINVEST/gs-claude-config.git}"
 BRANCH="${GS_BRANCH:-main}"
 CLAUDE_DIR="$HOME/.claude"
 MODE="copy"

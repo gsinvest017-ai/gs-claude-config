@@ -6,10 +6,10 @@
 # sync (that's install.ps1, which symlinks the author's personal CLAUDE.md).
 #
 # Remote one-liner (copy mode, no Dev Mode needed):
-#   irm https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.ps1 | iex
+#   irm https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.ps1 | iex
 #
 # With flags over the pipe:
-#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/gsinvest017-ai/gs-claude-config/main/install-toolkit.ps1))) -NoHooks
+#   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/GSINVEST/gs-claude-config/main/install-toolkit.ps1))) -NoHooks
 #
 # From a local clone:
 #   .\install-toolkit.ps1 [-Link] [-NoHooks] [-Dir <path>] [-RepoUrl <url>] [-Branch <name>]
@@ -24,7 +24,7 @@ param(
     [switch]$Link,
     [switch]$NoHooks,
     [string]$Dir,
-    [string]$RepoUrl = $(if ($env:GS_REPO_URL) { $env:GS_REPO_URL } else { 'https://github.com/gsinvest017-ai/gs-claude-config.git' }),
+    [string]$RepoUrl = $(if ($env:GS_REPO_URL) { $env:GS_REPO_URL } else { 'https://github.com/GSINVEST/gs-claude-config.git' }),
     [string]$Branch  = $(if ($env:GS_BRANCH)  { $env:GS_BRANCH }  else { 'main' })
 )
 

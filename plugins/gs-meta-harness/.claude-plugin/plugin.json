@@ -6,8 +6,8 @@
     "name": "Kevin",
     "email": "gsinvest017@gsinvest.com.tw"
   },
-  "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
-  "repository": "https://github.com/gsinvest017-ai/gs-claude-config",
+  "homepage": "https://github.com/GSINVEST/gs-claude-config",
+  "repository": "https://github.com/GSINVEST/gs-claude-config",
   "license": "MIT",
   "keywords": ["hooks", "branch-protection", "context-injection", "gs-harness", "safety"]
 }

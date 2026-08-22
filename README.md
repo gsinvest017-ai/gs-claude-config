@@ -8,7 +8,7 @@ Want the skills / commands / agents / autopilot hooks on your own machine? See *
 
 | Path | How | Best for |
 |------|-----|----------|
-| **Claude Code plugin** (recommended) | `/plugin marketplace add gsinvest017-ai/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` (+ optional `gs-autopilot@gs-claude-toolkit` for the `/autopilot` hook) | Native, nothing copied into `~/.claude`, base plugin ships zero hooks |
+| **Claude Code plugin** (recommended) | `/plugin marketplace add GSINVEST/gs-claude-config` → `/plugin install gs-claude-toolkit@gs-claude-toolkit` (+ optional `gs-autopilot@gs-claude-toolkit` for the `/autopilot` hook) | Native, nothing copied into `~/.claude`, base plugin ships zero hooks |
 | **Install script** | `curl -fsSL …/install-toolkit.sh \| bash` · `irm …/install-toolkit.ps1 \| iex` | Universal, copies into `~/.claude`, sets the autopilot block-cap env |
 
 Both are non-destructive: existing same-named items are backed up, `settings.json` is merged (never clobbered), and your own `CLAUDE.md` is never touched. Uninstall with `uninstall-toolkit.{sh,ps1}` or the `/plugin` menu.
@@ -19,7 +19,7 @@ The paths below are for **Kevin's** cross-machine sync — they symlink a person
 
 | Path | OS | One-liner | Best for |
 |------|----|-----------|----------|
-| **chezmoi** | Windows / macOS / Linux | `chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git` | New colleagues — handles prompts, installs apps, sets fonts |
+| **chezmoi** | Windows / macOS / Linux | `chezmoi init --apply https://github.com/GSINVEST/gs-claude-config.git` | New colleagues — handles prompts, installs apps, sets fonts |
 | install script | Linux / macOS (`.sh`), Windows (`.ps1`) | `git clone … && ./install.sh` (or `.\install.ps1`) | The contributor's full symlink-based sync |
 
 Pick whichever fits — both can coexist on the same machine; only the contributor (Kevin) needs the symlink path.
@@ -76,13 +76,13 @@ Single command on a fresh machine:
 ```powershell
 # Windows (PowerShell 7+ recommended; comes with the bootstrap script anyway)
 winget install --id twpayne.chezmoi --scope user -e
-chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git
+chezmoi init --apply https://github.com/GSINVEST/gs-claude-config.git
 ```
 
 ```bash
 # macOS / Linux
 brew install chezmoi   # or: sh -c "$(curl -fsLS get.chezmoi.io)"
-chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git
+chezmoi init --apply https://github.com/GSINVEST/gs-claude-config.git
 ```
 
 You'll be prompted for **7 values** the first time (defaults in brackets):

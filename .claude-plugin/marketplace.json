@@ -15,7 +15,7 @@
       "description": "42 skills (safe-yolo, survey-first, repo-scan, daily-summary, git-tag, quant-researcher, blender-physics-lint, and 35 more), 20 slash commands, and 5 subagents. Ships ZERO hooks — fully passive, nothing fires on your sessions.",
       "version": "1.0.0",
       "author": { "name": "Kevin" },
-      "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+      "homepage": "https://github.com/GSINVEST/gs-claude-config",
       "keywords": ["skills", "commands", "agents", "quant", "productivity"]
     },
     {
@@ -24,7 +24,7 @@
       "description": "Optional Stop-hook that powers the /autopilot skill (keep working until done / ceiling). Install ONLY if you want autopilot — it registers a Stop hook that runs every turn-end. Cross-platform Node shim, no jq.",
       "version": "1.0.0",
       "author": { "name": "Kevin" },
-      "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+      "homepage": "https://github.com/GSINVEST/gs-claude-config",
       "keywords": ["hooks", "autopilot", "automation"]
     },
     {
@@ -33,7 +33,7 @@
       "description": "Optional safety + context hooks from the gs-harness meta-loop. branch-guard: a PreToolUse hard gate blocking pushes to main/master, force pushes, --mirror and protected-branch deletion on BOTH the Bash and PowerShell tools, still enforced under bypassPermissions where deny rules are skipped; needs no external dependency, live the moment you install it. context-inject: a SessionStart hook injecting the cross-repo context gs-harness pre-renders — needs gs-harness on the machine, and without it the hook silently prints nothing and exits 0. Install ONLY if you want these hooks; the base gs-claude-toolkit plugin stays hook-free. Cross-platform Node, no jq, no pwsh.",
       "version": "1.0.0",
       "author": { "name": "Kevin" },
-      "homepage": "https://github.com/gsinvest017-ai/gs-claude-config",
+      "homepage": "https://github.com/GSINVEST/gs-claude-config",
       "keywords": ["hooks", "branch-protection", "context-injection", "gs-harness", "safety"]
     }
   ]
