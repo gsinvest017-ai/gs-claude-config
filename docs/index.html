@@ -470,10 +470,10 @@
       </div>
       <pre><code class="lang-powershell"># Windows (PowerShell 7+)
 winget install --id twpayne.chezmoi --scope user -e
-chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git</code></pre>
+chezmoi init --apply https://github.com/GSINVEST/gs-claude-config.git</code></pre>
       <pre><code class="lang-bash"># macOS / Linux
 brew install chezmoi   # or: sh -c "$(curl -fsLS get.chezmoi.io)"
-chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git</code></pre>
+chezmoi init --apply https://github.com/GSINVEST/gs-claude-config.git</code></pre>
       <p style="font-size:12px;color:var(--text-muted);margin-top:8px;margin-bottom:0">
         You'll be prompted for 7 values: name, email, githubUser, role, editor, installFonts, installCron.<br>
         To update later: <code>cd ~/.local/share/chezmoi &amp;&amp; git pull &amp;&amp; chezmoi apply</code>
@@ -485,7 +485,7 @@ chezmoi init --apply https://github.com/gsinvest017-ai/gs-claude-config.git</cod
         <span class="label">Legacy</span>
         install script — full symlink control
       </div>
-      <pre><code class="lang-bash">git clone https://github.com/gsinvest017-ai/gs-claude-config.git ~/gs-claude-config
+      <pre><code class="lang-bash">git clone https://github.com/GSINVEST/gs-claude-config.git ~/gs-claude-config
 cd ~/gs-claude-config
 ./install.sh        # POSIX (Linux / macOS)
 # or:

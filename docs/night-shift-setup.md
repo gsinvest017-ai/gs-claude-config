@@ -83,7 +83,7 @@
 ### 1. Clone + 全域配置
 
 ```bash
-git clone https://github.com/gsinvest017-ai/gs-claude-config.git ~/gs-claude-config
+git clone https://github.com/GSINVEST/gs-claude-config.git ~/gs-claude-config
 cd ~/gs-claude-config
 ./install.sh
 ```
